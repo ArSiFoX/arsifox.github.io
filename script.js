@@ -1,4 +1,5 @@
 const root = document.documentElement;
+let isLowDetailMode = false;
 
 function setupReveal() {
   const revealItems = document.querySelectorAll(".reveal");
@@ -39,6 +40,7 @@ function setupPointerGlow() {
   root.style.setProperty("--my", `${Math.round(window.innerHeight * 0.4)}px`);
 
   window.addEventListener("pointermove", (event) => {
+    if (isLowDetailMode) return;
     root.style.setProperty("--mx", `${event.clientX}px`);
     root.style.setProperty("--my", `${event.clientY}px`);
   });
@@ -46,6 +48,50 @@ function setupPointerGlow() {
   window.addEventListener("pointerleave", () => {
     root.style.setProperty("--mx", `${Math.round(window.innerWidth / 2)}px`);
     root.style.setProperty("--my", `${Math.round(window.innerHeight * 0.4)}px`);
+  });
+}
+
+function setupLowDetailMode() {
+  const toggle = document.getElementById("low-detail-toggle");
+  if (!toggle) return;
+
+  toggle.addEventListener("change", () => {
+    isLowDetailMode = toggle.checked;
+    document.body.classList.toggle("low-detail", isLowDetailMode);
+  });
+}
+
+function setupPageSearch() {
+  const form = document.getElementById("page-search-form");
+  const input = document.getElementById("page-search-input");
+  if (!form || !input) return;
+
+  function clearHits() {
+    document.querySelectorAll(".search-hit").forEach((el) => {
+      el.classList.remove("search-hit");
+    });
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = input.value.trim().toLowerCase();
+    clearHits();
+    if (!query) return;
+
+    const candidates = Array.from(
+      document.querySelectorAll(
+        "main h1, main h2, main h3, main p, main span, footer h2, footer p, footer a, footer button"
+      )
+    );
+    const hits = candidates.filter((el) => {
+      const text = (el.textContent || "").toLowerCase();
+      return text.includes(query);
+    });
+
+    hits.forEach((el) => el.classList.add("search-hit"));
+    if (hits[0]) {
+      hits[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   });
 }
 
@@ -81,10 +127,22 @@ function setupMatrixRain() {
   let width = window.innerWidth;
   let height = window.innerHeight;
   const fontSize = 16;
-  const chars = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789<>/{}[]";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/{}[]$#*+=";
   let columns = Math.floor(width / fontSize);
   let drops = Array(columns).fill(0);
   const clickBursts = [];
+  const speedInput = document.getElementById("matrix-speed");
+  const speedValue = document.getElementById("matrix-speed-value");
+  let matrixSpeed = 1;
+
+  if (speedInput) {
+    matrixSpeed = Number(speedInput.value) || 1;
+    if (speedValue) speedValue.textContent = `${matrixSpeed.toFixed(1)}x`;
+    speedInput.addEventListener("input", () => {
+      matrixSpeed = Number(speedInput.value) || 1;
+      if (speedValue) speedValue.textContent = `${matrixSpeed.toFixed(1)}x`;
+    });
+  }
 
   function resize() {
     width = window.innerWidth;
@@ -99,6 +157,12 @@ function setupMatrixRain() {
     const now = performance.now();
     for (let i = clickBursts.length - 1; i >= 0; i -= 1) {
       if (clickBursts[i].until <= now) clickBursts.splice(i, 1);
+    }
+
+    if (isLowDetailMode) {
+      ctx.clearRect(0, 0, width, height);
+      requestAnimationFrame(draw);
+      return;
     }
 
     ctx.fillStyle = "rgba(6, 17, 19, 0.12)";
@@ -133,11 +197,11 @@ function setupMatrixRain() {
         if (Math.random() > 0.95 - localStrength * 0.2) {
           drops[i] = Math.floor(Math.random() * (height / fontSize));
         }
-        drops[i] += 1 + localStrength * 1.4;
+        drops[i] += (1 + localStrength * 1.4) * matrixSpeed;
       } else {
         ctx.fillStyle = "#66ffb5";
         ctx.fillText(text, baseX, baseY);
-        drops[i] += 1;
+        drops[i] += matrixSpeed;
       }
 
       if (drops[i] * fontSize > height && Math.random() > 0.975) {
@@ -169,6 +233,7 @@ function setupMatrixRain() {
       until: performance.now() + 500,
     });
   });
+
   window.addEventListener("resize", resize);
   resize();
   draw();
@@ -294,6 +359,8 @@ function setupGravityCrash() {
 
 setupReveal();
 setupSmoothNavigation();
+setupLowDetailMode();
+setupPageSearch();
 setupPointerGlow();
 setupTiltCards();
 setupMatrixRain();

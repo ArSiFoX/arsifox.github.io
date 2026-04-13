@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -20,11 +20,35 @@
       EC
       <span class="logo-tip">Experienced Coder</span>
     </a>
-    <nav class="site-nav">
-      <a href="#about">Обо мне</a>
-      <a href="#stack">Стек</a>
-      <a href="#contacts">Контакты</a>
-    </nav>
+    <div class="header-right">
+      <nav class="site-nav">
+        <a href="#about">Обо мне</a>
+        <a href="#stack">Стек</a>
+        <a href="#contacts">Контакты</a>
+        <a class="minigames-link" href="./minigame/minigame.html" target="_blank" rel="noreferrer">Мини игры</a>
+      </nav>
+      <div class="header-tools">
+        <form id="page-search-form" class="terminal-search" role="search">
+          <span class="prompt">$</span>
+          <input id="page-search-input" type="search" placeholder="find on page..." aria-label="Поиск по странице">
+          <button type="submit">RUN</button>
+        </form>
+        <details class="params-menu">
+          <summary>Параметры</summary>
+          <div class="params-panel">
+            <label class="low-detail-toggle" for="low-detail-toggle">
+              <input id="low-detail-toggle" type="checkbox">
+              <span>Low Detail Mode</span>
+            </label>
+            <div class="matrix-controls">
+              <label for="matrix-speed">Matrix Speed</label>
+              <input id="matrix-speed" type="range" min="0.4" max="2.4" value="1" step="0.1">
+              <output id="matrix-speed-value" for="matrix-speed">1.0x</output>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
   </header>
 
   <main id="home">
@@ -91,3 +115,5 @@
   <script src="./script.js"></script>
 </body>
 </html>
+
+

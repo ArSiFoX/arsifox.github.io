@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мини игра | Nedocoder</title>
+  <meta name="description" content="Мини-игра: запускай IT-иконки из рогатки в ASCII-цели.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./minigame.css">
+</head>
+<body>
+  <div class="game-shell">
+    <header class="game-header">
+      <div class="title-wrap">
+        <p class="eyebrow">&lt;mini_game /&gt;</p>
+        <h1>IT Осада: ASCII Разнос</h1>
+      </div>
+      <div class="actions">
+        <button id="restart-btn" class="action-btn" type="button">Новый раунд</button>
+        <a class="action-btn back-btn" href="../index.html">Вернуться на главный сайт</a>
+      </div>
+    </header>
+
+    <section class="hud">
+      <p>Активный шар: <span id="projectile-name">...</span></p>
+      <p>Счёт: <span id="score">0</span></p>
+      <p>Цели: <span id="targets-left">0</span></p>
+      <p class="hud-hint">Тяни шар назад. Вперёд выстрелить нельзя.</p>
+    </section>
+
+    <section class="canvas-wrap">
+      <canvas id="game-canvas" width="1600" height="900" aria-label="Мини-игра в стиле Angry Birds"></canvas>
+    </section>
+  </div>
+
+  <script src="./minigame.js"></script>
+</body>
+</html>

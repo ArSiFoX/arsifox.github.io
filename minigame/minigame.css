@@ -1,0 +1,204 @@
+:root {
+  --bg-0: #040e12;
+  --bg-1: #0a1e24;
+  --bg-2: #13404d;
+  --accent: #48ffa8;
+  --accent-soft: rgba(72, 255, 168, 0.2);
+  --text-main: #e9fff4;
+  --text-muted: #9fd0c0;
+  --glass: rgba(6, 25, 30, 0.74);
+  --border: rgba(88, 255, 180, 0.26);
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(900px circle at 10% 8%, rgba(72, 255, 168, 0.15), transparent 55%),
+    radial-gradient(900px circle at 92% 30%, rgba(76, 162, 255, 0.1), transparent 55%),
+    linear-gradient(135deg, var(--bg-0), var(--bg-1) 50%, var(--bg-2));
+  overscroll-behavior: none;
+}
+
+body.is-aiming {
+  user-select: none;
+}
+
+.game-shell {
+  width: min(1320px, calc(100% - clamp(10px, 2vw, 26px)));
+  margin: clamp(8px, 1.2vh, 14px) auto clamp(10px, 1.4vh, 18px);
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: clamp(10px, 1.8vw, 20px);
+  padding: clamp(10px, 1.5vw, 16px);
+  border-radius: clamp(14px, 2vw, 22px);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--accent);
+  font-size: clamp(0.72rem, 0.8vw, 0.85rem);
+  letter-spacing: 0.04em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.08rem, 2.4vw, 2rem);
+  line-height: 1.15;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(42px, 5.2vw, 48px);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(13, 45, 46, 0.72);
+  color: var(--text-main);
+  text-decoration: none;
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(0.76rem, 1.2vw, 0.86rem);
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+  touch-action: manipulation;
+}
+
+.action-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.hud {
+  margin-top: clamp(8px, 1vw, 12px);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hud p {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: rgba(8, 31, 33, 0.66);
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(0.74rem, 1.05vw, 0.86rem);
+  color: var(--text-muted);
+}
+
+.hud span {
+  color: var(--accent);
+}
+
+.hud .hud-hint {
+  color: rgba(157, 255, 198, 0.86);
+}
+
+.canvas-wrap {
+  margin-top: clamp(8px, 1vw, 12px);
+  margin-inline: auto;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: clamp(14px, 2vw, 20px);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background:
+    radial-gradient(520px circle at 14% 8%, rgba(95, 255, 191, 0.1), transparent 50%),
+    rgba(6, 20, 27, 0.88);
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(3px, 0.45vw, 6px);
+  touch-action: none;
+}
+
+#game-canvas {
+  width: min(100%, calc((100svh - clamp(190px, 28vh, 280px)) * 16 / 9));
+  max-width: 100%;
+  max-height: min(76svh, 760px);
+  height: auto;
+  display: block;
+  aspect-ratio: 16 / 9;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body.is-aiming #game-canvas {
+  cursor: grabbing;
+}
+
+@media (max-width: 920px) {
+  .game-shell {
+    width: calc(100% - 12px);
+  }
+
+  .game-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  #game-canvas {
+    width: min(100%, calc((100svh - clamp(240px, 38vh, 330px)) * 16 / 9));
+    max-height: min(66svh, 600px);
+  }
+}
+
+@media (max-width: 640px) {
+  .hud {
+    gap: 8px;
+  }
+
+  .hud p {
+    width: 100%;
+  }
+
+  .action-btn {
+    min-height: 46px;
+    flex: 1 1 auto;
+  }
+
+  #game-canvas {
+    width: min(100%, calc((100svh - clamp(280px, 46vh, 380px)) * 16 / 9));
+    max-height: min(58svh, 480px);
+  }
+}
