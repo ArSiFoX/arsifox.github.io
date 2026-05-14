@@ -1,5 +1,120 @@
 const root = document.documentElement;
 let isLowDetailMode = false;
+let isLightTheme = false;
+
+function setupTheme() {
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle) return;
+
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "light") {
+    isLightTheme = true;
+    toggle.checked = true;
+    document.body.classList.add("light-theme");
+  }
+
+  toggle.addEventListener("change", () => {
+    isLightTheme = toggle.checked;
+    document.body.classList.toggle("light-theme", isLightTheme);
+    localStorage.setItem("theme", isLightTheme ? "light" : "dark");
+  });
+}
+
+function setupHueControl() {
+  const hueSlider = document.getElementById("site-hue");
+  const hueOutput = document.getElementById("site-hue-value");
+  if (!hueSlider || !hueOutput) return;
+
+  const savedHue = localStorage.getItem("site-hue");
+  if (savedHue) {
+    root.style.setProperty("--accent-h", savedHue);
+    hueSlider.value = savedHue;
+    hueOutput.textContent = `${savedHue}°`;
+  }
+
+  hueSlider.addEventListener("input", () => {
+    const hue = hueSlider.value;
+    root.style.setProperty("--accent-h", hue);
+    hueOutput.textContent = `${hue}°`;
+    localStorage.setItem("site-hue", hue);
+  });
+}
+
+function setupResetButton() {
+  const resetBtn = document.getElementById("reset-params");
+  if (!resetBtn) return;
+
+  resetBtn.addEventListener("click", () => {
+    // Clear storage
+    localStorage.removeItem("theme");
+    localStorage.removeItem("site-hue");
+    localStorage.removeItem("low-detail");
+
+    // Reset Theme
+    isLightTheme = false;
+    document.body.classList.remove("light-theme");
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) themeToggle.checked = false;
+
+    // Reset Hue
+    const defaultHue = 177;
+    root.style.setProperty("--accent-h", defaultHue);
+    const hueSlider = document.getElementById("site-hue");
+    const hueOutput = document.getElementById("site-hue-value");
+    if (hueSlider) hueSlider.value = defaultHue;
+    if (hueOutput) hueOutput.textContent = `${defaultHue}°`;
+
+    // Reset Low Detail
+    isLowDetailMode = false;
+    document.body.classList.remove("low-detail");
+    const detailToggle = document.getElementById("low-detail-toggle");
+    if (detailToggle) detailToggle.checked = false;
+
+    // Reset Matrix Speed
+    const speedInput = document.getElementById("matrix-speed");
+    if (speedInput) {
+      speedInput.value = 1;
+      speedInput.dispatchEvent(new Event("input"));
+    }
+  });
+}
+
+function setupRandomThemeButton() {
+  const randomBtn = document.getElementById("random-theme");
+  if (!randomBtn) return;
+
+  randomBtn.addEventListener("click", () => {
+    // Random Hue (0-360)
+    const randomHue = Math.floor(Math.random() * 361);
+    root.style.setProperty("--accent-h", randomHue);
+    localStorage.setItem("site-hue", randomHue);
+
+    // Update UI for Hue
+    const hueSlider = document.getElementById("site-hue");
+    const hueOutput = document.getElementById("site-hue-value");
+    if (hueSlider) hueSlider.value = randomHue;
+    if (hueOutput) hueOutput.textContent = `${randomHue}°`;
+
+    // Random Theme (Light/Dark)
+    isLightTheme = Math.random() > 0.5;
+    document.body.classList.toggle("light-theme", isLightTheme);
+    localStorage.setItem("theme", isLightTheme ? "light" : "dark");
+
+    // Update UI for Theme
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) themeToggle.checked = isLightTheme;
+
+    // Random Matrix Speed (0.4 - 2.4)
+    const speedInput = document.getElementById("matrix-speed");
+    if (speedInput) {
+      const min = parseFloat(speedInput.min) || 0.4;
+      const max = parseFloat(speedInput.max) || 2.4;
+      const randomSpeed = (Math.random() * (max - min) + min).toFixed(1);
+      speedInput.value = randomSpeed;
+      speedInput.dispatchEvent(new Event("input"));
+    }
+  });
+}
 
 function setupReveal() {
   const revealItems = document.querySelectorAll(".reveal");
@@ -55,9 +170,17 @@ function setupLowDetailMode() {
   const toggle = document.getElementById("low-detail-toggle");
   if (!toggle) return;
 
+  const savedLowDetail = localStorage.getItem("low-detail");
+  if (savedLowDetail === "true") {
+    isLowDetailMode = true;
+    toggle.checked = true;
+    document.body.classList.add("low-detail");
+  }
+
   toggle.addEventListener("change", () => {
     isLowDetailMode = toggle.checked;
     document.body.classList.toggle("low-detail", isLowDetailMode);
+    localStorage.setItem("low-detail", isLowDetailMode);
   });
 }
 
@@ -165,7 +288,13 @@ function setupMatrixRain() {
       return;
     }
 
-    ctx.fillStyle = "rgba(6, 17, 19, 0.12)";
+    // Dynamic colors based on theme and hue
+    const currentHue = getComputedStyle(root).getPropertyValue("--accent-h").trim();
+    const bgColor = isLightTheme ? `hsla(${currentHue}, 20%, 93%, 0.15)` : `hsla(${currentHue}, 50%, 5%, 0.12)`;
+    const charColor = isLightTheme ? `hsl(${currentHue}, 100%, 33%)` : `hsl(${currentHue}, 100%, 70%)`;
+    const highlightColor = isLightTheme ? `hsl(${currentHue}, 100%, 24%)` : `hsl(${currentHue}, 100%, 85%)`;
+
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
 
@@ -192,14 +321,14 @@ function setupMatrixRain() {
       if (localBreak) {
         const jitterX = (Math.random() - 0.5) * (26 * localStrength + 8);
         const jitterY = (Math.random() - 0.5) * (44 * localStrength + 10);
-        ctx.fillStyle = Math.random() > 0.8 ? "#d0ffe8" : "#66ffb5";
+        ctx.fillStyle = Math.random() > 0.8 ? highlightColor : charColor;
         ctx.fillText(text, baseX + jitterX, baseY + jitterY);
         if (Math.random() > 0.95 - localStrength * 0.2) {
           drops[i] = Math.floor(Math.random() * (height / fontSize));
         }
         drops[i] += (1 + localStrength * 1.4) * matrixSpeed;
       } else {
-        ctx.fillStyle = "#66ffb5";
+        ctx.fillStyle = charColor;
         ctx.fillText(text, baseX, baseY);
         drops[i] += matrixSpeed;
       }
@@ -215,7 +344,7 @@ function setupMatrixRain() {
       const alpha = Math.max(0, life * 0.42);
       const radius = burst.radius * (0.7 + (1 - life) * 0.6);
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(186, 255, 227, ${alpha})`;
+      ctx.strokeStyle = `hsla(${currentHue}, 100%, ${isLightTheme ? '40%' : '80%'}, ${alpha})`;
       ctx.lineWidth = 1.6;
       ctx.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
       ctx.stroke();
@@ -359,6 +488,10 @@ function setupGravityCrash() {
 
 setupReveal();
 setupSmoothNavigation();
+setupTheme();
+setupHueControl();
+setupResetButton();
+setupRandomThemeButton();
 setupLowDetailMode();
 setupPageSearch();
 setupPointerGlow();

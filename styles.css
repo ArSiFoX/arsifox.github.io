@@ -1,16 +1,72 @@
 :root {
-  --bg-0: #061113;
-  --bg-1: #0b1d21;
-  --bg-2: #12363b;
-  --accent: #41ff9d;
-  --accent-soft: rgba(65, 255, 157, 0.15);
-  --text-main: #e6fff4;
-  --text-muted: #a6c9be;
-  --glass: rgba(9, 33, 34, 0.55);
-  --glass-border: rgba(96, 245, 179, 0.25);
-  --shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  /* Dynamic Backgrounds - Increased saturation for a richer feel */
+  --bg-h: var(--accent-h);
+  --bg-s: 35%;
+  --bg-0: hsl(var(--bg-h), var(--bg-s), 4%);
+  --bg-1: hsl(var(--bg-h), var(--bg-s), 7%);
+  --bg-2: hsl(var(--bg-h), var(--bg-s), 12%);
+  
+  /* Accent HSL variables - Vibrant and clear (Cyan by default: 177) */
+  --accent-h: 177;
+  --accent-s: 100%;
+  --accent-l: 63%;
+  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --accent-soft: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2);
+
+  --text-main: hsl(var(--accent-h), 60%, 96%);
+  --text-muted: hsl(var(--accent-h), 25%, 78%);
+  --glass: hsla(var(--bg-h), 40%, 6%, 0.65);
+  --glass-border: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35);
+  --shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
   --mx: 50vw;
   --my: 40vh;
+
+  /* Additional variables for consistency */
+  --terminal-bg: hsla(var(--bg-h), 50%, 4%, 0.95);
+  --terminal-text: hsl(var(--accent-h), var(--accent-s), 85%);
+  --params-bg: hsla(var(--bg-h), 45%, 5%, 0.98);
+  --card-bg: linear-gradient(145deg, hsla(var(--bg-h), 40%, 10%, 0.75), hsla(var(--bg-h), 40%, 6%, 0.8));
+  --chip-bg: hsla(var(--bg-h), 40%, 8%, 0.65);
+  --btn-ghost-bg: hsla(var(--bg-h), 40%, 10%, 0.6);
+  --btn-primary-text: var(--bg-0);
+  --btn-primary-bg1: hsla(var(--accent-h), 100%, 85%, 1);
+  --btn-primary-bg2: var(--accent);
+  --body-gradient: radial-gradient(1300px circle at 8% 12%, hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.18), transparent 55%),
+                   radial-gradient(1000px circle at 90% 30%, hsla(var(--accent-h), var(--accent-s), 50%, 0.12), transparent 55%),
+                   linear-gradient(130deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+  --matrix-opacity: 0.4;
+}
+
+body.light-theme {
+  --bg-s: 25%;
+  --bg-0: hsl(var(--bg-h), var(--bg-s), 98%);
+  --bg-1: hsl(var(--bg-h), var(--bg-s), 95%);
+  --bg-2: hsl(var(--bg-h), var(--bg-s), 92%);
+  
+  /* Light theme adjustments for accent */
+  --accent-l: 35%;
+  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --accent-soft: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.12);
+
+  --text-main: hsl(var(--accent-h), 60%, 12%);
+  --text-muted: hsl(var(--accent-h), 35%, 38%);
+  --glass: hsla(var(--bg-h), 30%, 100%, 0.88);
+  --glass-border: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.25);
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+
+  --terminal-bg: hsla(var(--accent-h), 30%, 94%, 0.95);
+  --terminal-text: hsl(var(--accent-h), var(--accent-s), 28%);
+  --params-bg: hsla(var(--bg-h), 25%, 99%, 0.98);
+  --card-bg: linear-gradient(145deg, hsla(var(--bg-h), 25%, 100%, 0.9), hsla(var(--bg-h), 25%, 96%, 0.95));
+  --chip-bg: hsla(var(--accent-h), 25%, 88%, 0.8);
+  --btn-ghost-bg: hsla(var(--accent-h), 25%, 91%, 0.7);
+  --btn-primary-text: var(--bg-0);
+  --btn-primary-bg1: var(--accent);
+  --btn-primary-bg2: hsl(var(--accent-h), 100%, 25%);
+  --body-gradient: radial-gradient(1300px circle at 8% 12%, hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.08), transparent 55%),
+                   radial-gradient(1000px circle at 90% 30%, hsla(var(--accent-h), var(--accent-s), 50%, 0.08), transparent 55%),
+                   linear-gradient(130deg, var(--bg-0), var(--bg-1) 48%, var(--bg-2));
+  --matrix-opacity: 0.2;
 }
 
 *,
@@ -33,11 +89,9 @@ html {
 body {
   font-family: "Space Grotesk", sans-serif;
   color: var(--text-main);
-  background:
-    radial-gradient(1200px circle at 8% 12%, rgba(65, 255, 157, 0.14), transparent 55%),
-    radial-gradient(900px circle at 90% 30%, rgba(55, 153, 255, 0.08), transparent 55%),
-    linear-gradient(130deg, var(--bg-0), var(--bg-1) 48%, var(--bg-2));
+  background: var(--body-gradient);
   overflow-x: hidden;
+  transition: color 0.3s ease, background 0.3s ease;
 }
 
 #matrix-canvas {
@@ -46,7 +100,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -3;
-  opacity: 0.35;
+  opacity: var(--matrix-opacity);
 }
 
 .pointer-glow {
@@ -55,7 +109,7 @@ body {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(360px circle at var(--mx) var(--my), rgba(66, 255, 174, 0.2), transparent 58%);
+    radial-gradient(360px circle at var(--mx) var(--my), var(--accent-soft), transparent 58%);
 }
 
 .noise {
@@ -64,7 +118,7 @@ body {
   z-index: -2;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, rgba(128, 128, 128, 0.05) 1px, transparent 0);
   background-size: 3px 3px;
   opacity: 0.18;
 }
@@ -85,6 +139,7 @@ body {
   background: var(--glass);
   box-shadow: var(--shadow);
   z-index: 20;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .header-right {
@@ -119,7 +174,7 @@ body {
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: rgba(7, 28, 29, 0.95);
+  background: var(--params-bg);
   color: var(--text-main);
   font-size: 0.76rem;
   letter-spacing: 0.03em;
@@ -156,7 +211,7 @@ body {
 .site-nav .minigames-link {
   margin-left: 10px;
   padding-left: 12px;
-  border-left: 1px solid rgba(96, 245, 179, 0.3);
+  border-left: 1px solid var(--glass-border);
 }
 
 .header-tools {
@@ -173,13 +228,14 @@ body {
   gap: 8px;
   padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid rgba(102, 255, 181, 0.32);
-  background: rgba(4, 23, 17, 0.9);
-  box-shadow: inset 0 0 20px rgba(59, 255, 159, 0.09);
+  border: 1px solid var(--glass-border);
+  background: var(--terminal-bg);
+  box-shadow: inset 0 0 20px hsla(var(--accent-h), 100%, 63%, 0.05);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .terminal-search .prompt {
-  color: #8dffca;
+  color: var(--accent);
   font-family: "JetBrains Mono", monospace;
   font-weight: 700;
 }
@@ -189,35 +245,38 @@ body {
   border: none;
   outline: none;
   background: transparent;
-  color: #9dffc6;
+  color: var(--terminal-text);
   font-family: "JetBrains Mono", monospace;
   font-size: 0.85rem;
 }
 
 .terminal-search input::placeholder {
-  color: rgba(157, 255, 198, 0.5);
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .terminal-search button {
-  border: 1px solid rgba(102, 255, 181, 0.4);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
-  background: rgba(17, 58, 40, 0.75);
-  color: #9dffc6;
+  background: var(--chip-bg);
+  color: var(--terminal-text);
   padding: 5px 8px;
   font-family: "JetBrains Mono", monospace;
   font-size: 0.72rem;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.low-detail-toggle {
+.low-detail-toggle, .theme-toggle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 0.82rem;
   color: var(--text-muted);
+  cursor: pointer;
 }
 
-.low-detail-toggle input {
+.low-detail-toggle input, .theme-toggle input {
   accent-color: var(--accent);
 }
 
@@ -232,13 +291,14 @@ body {
   min-height: 38px;
   padding: 8px 12px;
   border-radius: 11px;
-  border: 1px solid rgba(102, 255, 181, 0.35);
-  background: rgba(10, 37, 30, 0.8);
-  color: #9dffc6;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--accent);
   font-family: "JetBrains Mono", monospace;
   font-size: 0.8rem;
   display: inline-flex;
   align-items: center;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .params-menu summary::-webkit-details-marker {
@@ -263,12 +323,13 @@ body {
   width: min(360px, calc(100vw - 24px));
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(102, 255, 181, 0.3);
-  background: rgba(6, 26, 23, 0.95);
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.36);
+  border: 1px solid var(--glass-border);
+  background: var(--params-bg);
+  box-shadow: var(--shadow);
   display: grid;
   gap: 10px;
   z-index: 35;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 main,
@@ -333,48 +394,62 @@ h2 {
   width: 100%;
   padding: 10px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 245, 179, 0.25);
-  background: rgba(8, 34, 31, 0.72);
+  border: 1px solid var(--glass-border);
+  background: var(--btn-ghost-bg);
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
+  transition: background 0.3s ease;
 }
 
 .matrix-controls label,
 .matrix-controls output {
   font-family: "JetBrains Mono", monospace;
   font-size: 0.82rem;
-  color: #92ffbf;
+  color: var(--accent);
 }
 
-#matrix-speed {
+#matrix-speed, #site-hue {
   appearance: none;
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(68, 255, 165, 0.8), rgba(53, 167, 255, 0.8));
+  background: var(--btn-ghost-bg);
   outline: none;
+  border: 1px solid var(--glass-border);
 }
 
-#matrix-speed::-webkit-slider-thumb {
+#site-hue {
+  background: linear-gradient(to right, 
+    hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), 
+    hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%));
+}
+
+#matrix-speed {
+  background: linear-gradient(90deg, var(--accent), hsl(206, 100%, 60%));
+}
+
+#matrix-speed::-webkit-slider-thumb, #site-hue::-webkit-slider-thumb {
   appearance: none;
   width: 17px;
   height: 17px;
   border-radius: 50%;
-  border: 1px solid #b4ffd8;
-  background: #56ffac;
+  border: 1px solid var(--bg-0);
+  background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 0 4px rgba(86, 255, 172, 0.2);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  transition: background 0.2s ease;
 }
 
-#matrix-speed::-moz-range-thumb {
+#matrix-speed::-moz-range-thumb, #site-hue::-moz-range-thumb {
   width: 17px;
   height: 17px;
   border-radius: 50%;
-  border: 1px solid #b4ffd8;
-  background: #56ffac;
+  border: 1px solid var(--bg-0);
+  background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 0 4px rgba(86, 255, 172, 0.2);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  transition: background 0.2s ease;
 }
 
 .btn {
@@ -386,7 +461,7 @@ h2 {
   text-decoration: none;
   font-weight: 700;
   font-size: 0.95rem;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 0.3s ease;
 }
 
 .btn:hover {
@@ -394,20 +469,20 @@ h2 {
 }
 
 .btn-primary {
-  color: #022910;
-  background: linear-gradient(130deg, #8dffca, var(--accent));
-  box-shadow: 0 12px 36px rgba(65, 255, 157, 0.24);
+  color: var(--bg-0);
+  background: linear-gradient(130deg, hsla(var(--accent-h), 100%, 85%, 1), var(--accent));
+  box-shadow: 0 12px 36px var(--accent-soft);
 }
 
 .btn-ghost {
   color: var(--text-main);
   border: 1px solid var(--glass-border);
-  background: rgba(12, 42, 44, 0.55);
+  background: var(--btn-ghost-bg);
 }
 
 .btn-ghost:hover {
   border-color: var(--accent);
-  box-shadow: 0 10px 34px rgba(58, 244, 169, 0.16);
+  box-shadow: 0 10px 34px var(--accent-soft);
 }
 
 .card-grid {
@@ -422,17 +497,18 @@ h2 {
   padding: 20px;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
-  background: linear-gradient(145deg, rgba(14, 48, 47, 0.68), rgba(9, 23, 27, 0.7));
+  background: var(--card-bg);
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow);
   transform-style: preserve-3d;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .info-card::after {
   content: "";
   position: absolute;
   inset: -60%;
-  background: radial-gradient(circle, rgba(144, 255, 210, 0.2), transparent 45%);
+  background: radial-gradient(circle, var(--accent-soft), transparent 45%);
   opacity: 0;
   transition: opacity 220ms ease;
   pointer-events: none;
@@ -465,22 +541,23 @@ h2 {
   padding: 10px 14px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
-  background: rgba(10, 41, 42, 0.6);
+  background: var(--chip-bg);
   color: var(--text-main);
   font-family: "JetBrains Mono", monospace;
   font-size: 0.88rem;
-  box-shadow: inset 0 0 16px rgba(74, 250, 177, 0.08);
+  box-shadow: inset 0 0 16px var(--accent-soft);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .chips .chip-button {
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 0.3s ease;
 }
 
 .chips .chip-button:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 8px 20px rgba(74, 250, 177, 0.18), inset 0 0 16px rgba(74, 250, 177, 0.08);
+  box-shadow: 0 8px 20px var(--accent-soft), inset 0 0 16px var(--accent-soft);
 }
 
 .site-footer {
@@ -508,8 +585,8 @@ h2 {
   border-radius: 12px;
   padding: 10px 14px;
   text-decoration: none;
-  background: rgba(12, 42, 44, 0.55);
-  transition: color 170ms ease, border-color 170ms ease;
+  background: var(--btn-ghost-bg);
+  transition: color 170ms ease, border-color 170ms ease, background 0.3s ease;
 }
 
 .contact-btn:hover {
@@ -532,7 +609,7 @@ h2 {
   font-family: "JetBrains Mono", monospace;
   font-weight: 600;
   cursor: pointer;
-  transition: left 140ms ease, top 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition: left 140ms ease, top 140ms ease, border-color 140ms ease, transform 140ms ease, background 0.3s ease;
 }
 
 .max-btn:hover {
@@ -547,13 +624,13 @@ h2 {
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--glass-border);
-  background: rgba(7, 28, 29, 0.88);
+  background: var(--params-bg);
   color: var(--accent);
   font-family: "JetBrains Mono", monospace;
   line-height: 1.1;
   opacity: 0;
   transform: translateY(8px) scale(0.96);
-  transition: opacity 180ms ease, transform 180ms ease;
+  transition: opacity 180ms ease, transform 180ms ease, background 0.3s ease;
   pointer-events: none;
 }
 
@@ -586,7 +663,7 @@ h2 {
 
 .search-hit {
   animation: search-highlight 1200ms ease;
-  box-shadow: 0 0 0 2px rgba(110, 255, 191, 0.42);
+  box-shadow: 0 0 0 2px var(--accent);
   border-radius: 8px;
 }
 
@@ -597,7 +674,7 @@ h2 {
 }
 
 @keyframes search-highlight {
-  0% { background: rgba(110, 255, 191, 0.2); }
+  0% { background: var(--accent-soft); }
   100% { background: transparent; }
 }
 

@@ -1,14 +1,47 @@
 :root {
-  --bg-0: #040e12;
-  --bg-1: #0a1e24;
-  --bg-2: #13404d;
-  --accent: #48ffa8;
-  --accent-soft: rgba(72, 255, 168, 0.2);
-  --text-main: #e9fff4;
-  --text-muted: #9fd0c0;
-  --glass: rgba(6, 25, 30, 0.74);
-  --border: rgba(88, 255, 180, 0.26);
-  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  /* Dynamic Backgrounds (matching main site) */
+  --bg-h: var(--accent-h);
+  --bg-s: 35%;
+  --bg-0: hsl(var(--bg-h), var(--bg-s), 4%);
+  --bg-1: hsl(var(--bg-h), var(--bg-s), 7%);
+  --bg-2: hsl(var(--bg-h), var(--bg-s), 12%);
+  
+  --accent-h: 177; /* Default cyan */
+  --accent-s: 100%;
+  --accent-l: 63%;
+  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --accent-soft: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.2);
+
+  --text-main: hsl(var(--accent-h), 60%, 96%);
+  --text-muted: hsl(var(--accent-h), 25%, 78%);
+  --glass: hsla(var(--bg-h), 40%, 6%, 0.65);
+  --border: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.35);
+  --shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+  
+  --panel-bg: rgba(8, 31, 33, 0.66);
+  --btn-bg: rgba(13, 45, 46, 0.72);
+  --wrap-bg: rgba(6, 20, 27, 0.88);
+}
+
+body.light-theme {
+  --bg-s: 25%;
+  --bg-0: hsl(var(--bg-h), var(--bg-s), 96%);
+  --bg-1: hsl(var(--bg-h), var(--bg-s), 93%);
+  --bg-2: hsl(var(--bg-h), var(--bg-s), 90%);
+  
+  --accent-l: 35%;
+  --accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --accent-soft: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.12);
+
+  --text-main: hsl(var(--accent-h), 60%, 12%);
+  --text-muted: hsl(var(--accent-h), 35%, 38%);
+  --glass: hsla(var(--bg-h), 30%, 100%, 0.82);
+  --border: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15);
+  --shadow: 0 15px 45px rgba(0, 0, 0, 0.08);
+
+  --panel-bg: hsla(var(--bg-h), 25%, 96%, 0.85);
+  --btn-bg: hsla(var(--bg-h), 25%, 92%, 0.9);
+  --wrap-bg: hsla(var(--bg-h), 25%, 98%, 0.9);
 }
 
 *,
@@ -27,7 +60,7 @@ body {
   font-family: "Space Grotesk", sans-serif;
   color: var(--text-main);
   background:
-    radial-gradient(900px circle at 10% 8%, rgba(72, 255, 168, 0.15), transparent 55%),
+    radial-gradient(900px circle at 10% 8%, hsla(var(--accent-h), 100%, 63%, 0.15), transparent 55%),
     radial-gradient(900px circle at 92% 30%, rgba(76, 162, 255, 0.1), transparent 55%),
     linear-gradient(135deg, var(--bg-0), var(--bg-1) 50%, var(--bg-2));
   overscroll-behavior: none;
@@ -84,7 +117,7 @@ h1 {
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(13, 45, 46, 0.72);
+  background: var(--btn-bg);
   color: var(--text-main);
   text-decoration: none;
   font-family: "JetBrains Mono", monospace;
@@ -112,7 +145,7 @@ h1 {
   padding: 8px 12px;
   border-radius: 11px;
   border: 1px solid var(--border);
-  background: rgba(8, 31, 33, 0.66);
+  background: var(--panel-bg);
   font-family: "JetBrains Mono", monospace;
   font-size: clamp(0.74rem, 1.05vw, 0.86rem);
   color: var(--text-muted);
@@ -123,25 +156,26 @@ h1 {
 }
 
 .hud .hud-hint {
-  color: rgba(157, 255, 198, 0.86);
+  color: hsla(var(--accent-h), 100%, 81%, 0.86);
 }
 
 .canvas-wrap {
   margin-top: clamp(8px, 1vw, 12px);
   margin-inline: auto;
+  position: relative;
   width: fit-content;
   max-width: 100%;
   border-radius: clamp(14px, 2vw, 20px);
   border: 1px solid var(--border);
   overflow: hidden;
   background:
-    radial-gradient(520px circle at 14% 8%, rgba(95, 255, 191, 0.1), transparent 50%),
-    rgba(6, 20, 27, 0.88);
+    radial-gradient(520px circle at 14% 8%, hsla(var(--accent-h), 100%, 70%, 0.1), transparent 50%),
+    var(--wrap-bg);
   box-shadow: var(--shadow);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: clamp(3px, 0.45vw, 6px);
+  cursor: crosshair;
   touch-action: none;
 }
 

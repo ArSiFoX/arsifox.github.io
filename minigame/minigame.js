@@ -1,3 +1,16 @@
+const root = document.documentElement;
+const savedHue = localStorage.getItem("site-hue");
+const savedTheme = localStorage.getItem("theme");
+
+if (savedHue) {
+  root.style.setProperty("--accent-h", savedHue);
+}
+
+const isLightTheme = savedTheme === "light";
+if (isLightTheme) {
+  document.body.classList.add("light-theme");
+}
+
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas?.getContext("2d");
 
@@ -571,19 +584,27 @@ function rebuildStaticBackground() {
   if (!backgroundCtx) return;
 
   backgroundCtx.clearRect(0, 0, WORLD.width, WORLD.height);
-  backgroundCtx.fillStyle = "#081821";
+  // Match main site backgrounds
+  const bgS = isLightTheme ? "25%" : "35%";
+  const bg0L = isLightTheme ? "98%" : "4%";
+  const bg1L = isLightTheme ? "95%" : "7%";
+
+  backgroundCtx.fillStyle = `hsl(${savedHue || 177}, ${bgS}, ${bg0L})`;
   backgroundCtx.fillRect(0, 0, WORLD.width, WORLD.height);
 
   const sky = backgroundCtx.createLinearGradient(0, 0, 0, WORLD.height);
-  sky.addColorStop(0, "rgba(37, 142, 128, 0.22)");
+  const skyAlpha = isLightTheme ? 0.08 : 0.12;
+  sky.addColorStop(0, `hsla(${savedHue || 177}, 60%, 33%, ${skyAlpha})`);
   sky.addColorStop(1, "rgba(5, 10, 16, 0)");
   backgroundCtx.fillStyle = sky;
   backgroundCtx.fillRect(0, 0, WORLD.width, WORLD.height);
 
-  backgroundCtx.fillStyle = "#0f2c2f";
+  // Match main site bg-1
+  backgroundCtx.fillStyle = `hsl(${savedHue || 177}, ${bgS}, ${bg1L})`;
   backgroundCtx.fillRect(0, WORLD.groundY, WORLD.width, WORLD.height - WORLD.groundY);
 
-  backgroundCtx.strokeStyle = "rgba(120, 255, 196, 0.25)";
+  const gridAlpha = isLightTheme ? 0.1 : 0.15;
+  backgroundCtx.strokeStyle = `hsla(${savedHue || 177}, 100%, 74%, ${gridAlpha})`;
   backgroundCtx.lineWidth = 2;
   for (let x = 0; x <= WORLD.width; x += 80) {
     backgroundCtx.beginPath();
@@ -592,7 +613,8 @@ function rebuildStaticBackground() {
     backgroundCtx.stroke();
   }
 
-  backgroundCtx.fillStyle = "rgba(36, 70, 61, 0.85)";
+  const queueAlpha = isLightTheme ? 0.3 : 0.5;
+  backgroundCtx.fillStyle = `hsla(${savedHue || 177}, 33%, 21%, ${queueAlpha})`;
   backgroundCtx.fillRect(sling.queueBaseX - 44, WORLD.groundY - 12, 244, 12);
 }
 
@@ -608,22 +630,24 @@ function drawOrb(x, y, radius, icon, label, alpha, rotation) {
     const size = radius * 2.2; // Slightly larger than the radius for better visibility
     
     // Optional: subtle shadow for depth
-    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = `hsla(${savedHue || 177}, 100%, 50%, 0.4)`;
+    ctx.shadowBlur = isLightTheme ? 6 : 12;
     ctx.shadowOffsetY = 4;
     
     ctx.drawImage(iconImg, -size / 2, -size / 2, size, size);
   } else {
     // Fallback if image fails to load
-    ctx.fillStyle = "#2ee896";
+    const orbL = isLightTheme ? "45%" : "54%";
+    ctx.fillStyle = `hsl(${savedHue || 177}, 67%, ${orbL})`;
     ctx.beginPath();
     ctx.arc(0, 0, radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#081821";
+    const borderL = isLightTheme ? "90%" : "8%";
+    ctx.strokeStyle = `hsl(${savedHue || 177}, 50%, ${borderL})`;
     ctx.lineWidth = 2;
     ctx.stroke();
     
-    ctx.fillStyle = "#081821";
+    ctx.fillStyle = `hsl(${savedHue || 177}, 50%, ${borderL})`;
     ctx.font = `bold ${Math.max(10, radius * 0.5)}px JetBrains Mono`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -642,12 +666,23 @@ function drawTargets() {
     const y = t.y + shakeY;
 
     ctx.save();
-    ctx.fillStyle = t.hitFlash > 0 ? "rgba(42, 114, 112, 0.95)" : "rgba(9, 33, 39, 0.88)";
-    ctx.strokeStyle = "rgba(94, 255, 181, 0.35)";
+    const targetBg = isLightTheme 
+      ? (t.hitFlash > 0 ? `hsla(${savedHue || 177}, 46%, 85%, 0.95)` : "rgba(255, 255, 255, 0.88)")
+      : (t.hitFlash > 0 ? `hsla(${savedHue || 177}, 46%, 30%, 0.95)` : "rgba(9, 33, 39, 0.88)");
+    
+    ctx.fillStyle = targetBg;
+    ctx.strokeStyle = isLightTheme 
+      ? `hsla(${savedHue || 177}, 100%, 40%, 0.35)`
+      : `hsla(${savedHue || 177}, 100%, 70%, 0.35)`;
+    
     ctx.lineWidth = 2;
     ctx.fillRect(x, y, t.w, t.h);
     ctx.strokeRect(x, y, t.w, t.h);
-    ctx.fillStyle = "#90ffd1";
+    
+    ctx.fillStyle = isLightTheme 
+      ? `hsl(${savedHue || 177}, 100%, 25%)`
+      : `hsl(${savedHue || 177}, 100%, 78%)`;
+    
     ctx.font = "15px JetBrains Mono";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
@@ -787,7 +822,7 @@ function drawTrajectoryPreview() {
     angularV: 0
   };
 
-  ctx.fillStyle = "rgba(164, 255, 215, 0.68)";
+  ctx.fillStyle = isLightTheme ? `rgba(60, 60, 60, 0.68)` : `hsla(${savedHue || 177}, 100%, 82%, 0.68)`;
   const steps = 45;
   const subSteps = 3; 
   for (let i = 0; i < steps; i += 1) {
@@ -832,14 +867,14 @@ function drawParticles() {
   for (let i = 0; i < particles.length; i += 1) {
     const p = particles[i];
     ctx.globalAlpha = Math.max(0, p.life * 1.25);
-    ctx.fillStyle = "#a5ffd7";
+    ctx.fillStyle = `hsl(${savedHue || 177}, 100%, 82%)`;
     ctx.fillRect(p.x, p.y, p.size, p.size);
     ctx.globalAlpha = 1;
   }
 }
 
 function drawGuide() {
-  ctx.fillStyle = "rgba(137, 255, 206, 0.86)";
+  ctx.fillStyle = `hsla(${savedHue || 177}, 100%, 77%, 0.86)`;
   ctx.font = "16px JetBrains Mono";
   ctx.textAlign = "left";
   ctx.fillText("Очередь шаров слева. Тяни в ЛЮБУЮ сторону и отпускай.", 34, 54);
@@ -847,7 +882,7 @@ function drawGuide() {
 
 function drawFPS() {
   ctx.save();
-  ctx.fillStyle = "rgba(72, 255, 168, 0.8)";
+  ctx.fillStyle = `hsla(${savedHue || 177}, 100%, 64%, 0.8)`;
   ctx.font = "bold 18px JetBrains Mono";
   ctx.textAlign = "right";
   ctx.fillText(`FPS: ${fps}`, WORLD.width - 34, 54);
