@@ -227,14 +227,31 @@ body.is-aiming #game-canvas {
     width: 100%;
     justify-content: flex-start;
   }
+}
 
-  #game-canvas {
-    width: min(100%, calc((100svh - clamp(240px, 38vh, 330px)) * 16 / 9));
-    max-height: min(66svh, 600px);
+@media (max-width: 920px) and (orientation: landscape) {
+  .game-shell {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  .game-header, .hud {
+    display: none;
+  }
+
+  .canvas-wrap {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border: none;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (orientation: portrait) {
   .hud {
     gap: 8px;
   }
