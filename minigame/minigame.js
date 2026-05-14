@@ -77,7 +77,7 @@ const ASCII_TARGETS = [
 ];
 
 const WORLD = {
-  gravity: 980,
+  gravity: 1100, // Increased gravity for a heavier feel
   width: 1600,
   height: 900,
   groundY: 802,
@@ -90,19 +90,23 @@ const SIM = {
 };
 
 const LAUNCH = {
-  minBackwardPull: 24,
-  minPullDistance: 34,
-  minAngle: (9 * Math.PI) / 180,
-  maxAngle: (79 * Math.PI) / 180,
-  snapDuration: 0.16,
+  minBackwardPull: 15,
+  minPullDistance: 20,
+  minAngle: (0 * Math.PI) / 180,
+  maxAngle: (90 * Math.PI) / 180,
+  snapDuration: 0.1,
+  velocityMultiplier: 11.0, // Further reduced power
 };
+
+
 
 const sling = {
   x: 292,
   y: 710,
-  maxStretch: 246,
+  maxStretch: 220, 
   bandY: 630,
   queueBaseX: 118,
+  shake: 0,
 };
 
 let idCounter = 0;
@@ -121,6 +125,22 @@ let isDragging = false;
 
 const backgroundCanvas = document.createElement("canvas");
 const backgroundCtx = backgroundCanvas.getContext("2d");
+
+function integratePhysics(p, step) {
+  // Air resistance (drag)
+  const drag = 1 - (p.airDrag || 0.1) * step;
+  p.vx *= drag;
+  p.vy *= drag;
+
+  // Update position using current velocity
+  p.x += p.vx * step;
+  p.y += p.vy * step;
+
+  // Apply gravity for the next step
+  p.vy += WORLD.gravity * step;
+  
+  p.rotation += (p.vx * 0.002 + p.angularV) * step * 60;
+}
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
@@ -171,7 +191,7 @@ function promoteNextProjectile() {
   refillQueue();
   activeProjectile = {
     x: sling.x,
-    y: sling.y,
+    y: sling.bandY,
     seed,
     r: seed.preset.radius,
     pullDistance: 0,
@@ -232,37 +252,32 @@ function canStartDrag(point) {
   if (!activeProjectile || activeProjectile.snapback) return false;
   const ballDist = Math.hypot(point.x - activeProjectile.x, point.y - activeProjectile.y);
   if (ballDist <= activeProjectile.r + 24) return true;
-  const slingDist = Math.hypot(point.x - sling.x, point.y - sling.y);
+  const slingDist = Math.hypot(point.x - sling.x, point.y - sling.bandY);
   return slingDist <= 96;
 }
 
 function updateDragPoint(point) {
   if (!activeProjectile) return;
 
+  // Calculate offsets from band height
   let dx = point.x - sling.x;
-  let dy = point.y - sling.y;
+  let dy = point.y - sling.bandY;
 
-  dx = clamp(dx, -sling.maxStretch, 38);
-  dy = clamp(dy, -sling.maxStretch * 0.95, sling.maxStretch * 0.95);
-
-  const len = Math.hypot(dx, dy);
-  if (len > sling.maxStretch) {
-    const ratio = sling.maxStretch / len;
+  // Constraint: Limit pull distance to maxStretch (but allow any direction)
+  const pullDistance = Math.hypot(dx, dy);
+  if (pullDistance > sling.maxStretch) {
+    const ratio = sling.maxStretch / pullDistance;
     dx *= ratio;
     dy *= ratio;
   }
 
   activeProjectile.x = sling.x + dx;
-  const maxY = WORLD.groundY - activeProjectile.r - 2;
-  activeProjectile.y = Math.min(sling.y + dy, maxY);
+  activeProjectile.y = sling.bandY + dy;
 
-  const pullX = sling.x - activeProjectile.x;
-  const pullY = sling.y - activeProjectile.y;
-  activeProjectile.pullDistance = Math.hypot(pullX, pullY);
-  activeProjectile.validPull =
-    pullX >= LAUNCH.minBackwardPull && activeProjectile.pullDistance >= LAUNCH.minPullDistance;
+  // Update pull metrics for launch calculation
+  activeProjectile.pullDistance = Math.hypot(dx, dy);
+  activeProjectile.validPull = activeProjectile.pullDistance >= LAUNCH.minPullDistance;
 }
-
 function beginSnapback() {
   if (!activeProjectile) return;
   activeProjectile.snapback = {
@@ -276,28 +291,23 @@ function beginSnapback() {
 function computeLaunchVelocity() {
   if (!activeProjectile) return null;
 
-  const pullX = sling.x - activeProjectile.x;
-  const pullY = sling.y - activeProjectile.y;
-  const pullDistance = Math.hypot(pullX, pullY);
+  // Vector from Projectile to Band center
+  const dx = sling.x - activeProjectile.x;
+  const dy = sling.bandY - activeProjectile.y;
+  const pullDistance = Math.hypot(dx, dy);
 
-  if (pullX < LAUNCH.minBackwardPull || pullDistance < LAUNCH.minPullDistance) {
+  if (pullDistance < LAUNCH.minPullDistance) {
     return null;
   }
 
-  let angle = Math.atan2(-pullY, pullX);
-  angle = clamp(angle, LAUNCH.minAngle, LAUNCH.maxAngle);
-
-  const preset = activeProjectile.seed.preset;
-  const stretchRatio = clamp(pullDistance / sling.maxStretch, 0, 1);
-  const baseSpeed = 560 + 980 * Math.pow(stretchRatio, 0.9);
-  const speed =
-    (baseSpeed * preset.launchMultiplier) / Math.max(0.72, Math.sqrt(preset.mass * 0.95));
-
+  // The speed is proportional to how far we pull
+  const speedScale = LAUNCH.velocityMultiplier / Math.sqrt(activeProjectile.seed.preset.mass);
+  
+  // VX and VY must be a direct reflection of DX and DY
   return {
-    vx: Math.cos(angle) * speed,
-    vy: -Math.sin(angle) * speed,
-    speed,
-    stretchRatio,
+    vx: dx * speedScale,
+    vy: dy * speedScale,
+    speed: pullDistance * speedScale,
   };
 }
 
@@ -312,7 +322,7 @@ function launchActiveProjectile() {
   const fired = {
     id: nextId(),
     x: activeProjectile.x,
-    y: Math.min(activeProjectile.y, WORLD.groundY - activeProjectile.r - 2),
+    y: activeProjectile.y,
     vx: launch.vx,
     vy: launch.vy,
     r: preset.radius,
@@ -321,13 +331,13 @@ function launchActiveProjectile() {
     groundFriction: preset.groundFriction,
     airDrag: preset.airDrag,
     damage: preset.damage,
-    lifetime: preset.lifetime,
-    fadeDuration: preset.fadeDuration,
+    lifetime: 4.5,
+    fadeDuration: 0.5,
     age: 0,
     fadeAge: 0,
     alpha: 1,
     rotation: 0,
-    angularV: rand(-2.4, 2.4),
+    angularV: rand(-2, 2),
     restTimer: 0,
     sleeping: false,
     label: icon.name,
@@ -335,9 +345,11 @@ function launchActiveProjectile() {
   };
 
   firedProjectiles.push(fired);
-  if (firedProjectiles.length > 18) {
-    firedProjectiles.splice(0, firedProjectiles.length - 18);
+  if (firedProjectiles.length > 15) {
+    firedProjectiles.shift();
   }
+
+  sling.shake = 1.2;
 
   promoteNextProjectile();
 }
@@ -390,37 +402,36 @@ function circleRectHit(circle, rect) {
 }
 
 function applyWorldCollisions(p) {
-  const wallFriction = 0.98;
-
-  if (p.x - p.r < 0) {
-    p.x = p.r;
-    p.vx = Math.abs(p.vx) * p.restitution;
-    p.vy *= wallFriction;
-  } else if (p.x + p.r > WORLD.width) {
-    p.x = WORLD.width - p.r;
-    p.vx = -Math.abs(p.vx) * p.restitution;
-    p.vy *= wallFriction;
-  }
-
-  if (p.y - p.r < 0) {
-    p.y = p.r;
-    p.vy = Math.abs(p.vy) * p.restitution;
-    p.vx *= wallFriction;
-  }
-
-  if (p.y + p.r > WORLD.groundY) {
+  if (p.y + p.r > WORLD.groundY && p.vy > 0) {
     p.y = WORLD.groundY - p.r;
-    if (p.vy > 0) p.vy = -p.vy * p.restitution;
+    
+    if (p.vy > 40) {
+      p.vy = -p.vy * p.restitution;
+    } else {
+      p.vy = 0;
+    }
+    
     p.vx *= p.groundFriction;
-
-    if (Math.abs(p.vy) < 24) p.vy = 0;
-    if (Math.abs(p.vx) < 14 && Math.abs(p.vy) < 8) {
+    
+    if (Math.abs(p.vx) < 25 && Math.abs(p.vy) < 20) {
       p.restTimer += SIM.fixedStep;
-      if (p.restTimer > 0.34) p.sleeping = true;
+      if (p.restTimer > 0.5) {
+        p.sleeping = true;
+        p.vx = 0;
+        p.vy = 0;
+      }
     } else {
       p.restTimer = 0;
-      p.sleeping = false;
     }
+  }
+
+  const wallRest = 0.6;
+  if (p.x - p.r < 0 && p.vx < 0) {
+    p.x = p.r;
+    p.vx = -p.vx * wallRest;
+  } else if (p.x + p.r > WORLD.width && p.vx > 0) {
+    p.x = WORLD.width - p.r;
+    p.vx = -p.vx * wallRest;
   }
 }
 
@@ -434,7 +445,7 @@ function hitTargets(projectile) {
     const impact = projectile.damage * (1 + speed * 0.018) * (0.58 + projectile.mass * 0.24);
 
     target.hp -= impact;
-    target.shake = Math.min(0.26, target.shake + 0.1);
+    target.shake = Math.min(0.26, target.shake + 0.12);
     target.hitFlash = 0.12;
 
     const carry = clamp(0.54 + projectile.mass * 0.19, 0.6, 0.88);
@@ -459,10 +470,10 @@ function updateActiveProjectile(step) {
   const t = clamp(snap.t, 0, 1);
   const eased = 1 - Math.pow(1 - t, 3);
   activeProjectile.x = snap.fromX + (sling.x - snap.fromX) * eased;
-  activeProjectile.y = snap.fromY + (sling.y - snap.fromY) * eased;
+  activeProjectile.y = snap.fromY + (sling.bandY - snap.fromY) * eased;
   if (t >= 1) {
     activeProjectile.x = sling.x;
-    activeProjectile.y = sling.y;
+    activeProjectile.y = sling.bandY;
     activeProjectile.snapback = null;
   }
 }
@@ -474,20 +485,12 @@ function updateFiredProjectiles(step) {
     p.age += step;
 
     if (!p.sleeping) {
-      const drag = Math.max(0.7, 1 - p.airDrag * step);
-      p.vx *= drag;
-      p.vy *= drag;
-
-      p.vy += WORLD.gravity * step;
-      p.x += p.vx * step;
-      p.y += p.vy * step;
-      p.rotation += (p.angularV + p.vx * 0.0014) * step * 60;
-
+      integratePhysics(p, step);
       applyWorldCollisions(p);
       hitTargets(p);
     } else {
-      p.vx *= 0.92;
-      p.rotation *= 0.96;
+      p.vx *= 0.9;
+      p.rotation *= 0.95;
     }
 
     if (p.age > p.lifetime) {
@@ -495,7 +498,7 @@ function updateFiredProjectiles(step) {
       p.alpha = 1 - p.fadeAge / p.fadeDuration;
     }
 
-    if (p.alpha <= 0 || p.y > WORLD.height + 130) {
+    if (p.alpha <= 0 || p.y > WORLD.height + 150) {
       firedProjectiles.splice(i, 1);
     }
   }
@@ -551,6 +554,7 @@ function updateSimulation(step) {
   updateFiredProjectiles(step);
   updateTargets(step);
   updateParticles(step);
+  sling.shake = Math.max(0, sling.shake - step * 4);
   updateHud();
 }
 
@@ -665,41 +669,36 @@ function drawQueue() {
 }
 
 function drawSling() {
-  const leftArmX = sling.x - 26;
-  const rightArmX = sling.x + 26;
-  const forkTopY = sling.y - 146;
+  const shakeX = Math.sin(animationClock * 80) * sling.shake * 12;
+  const leftArmX = sling.x - 26 + shakeX;
+  const rightArmX = sling.x + 26 + shakeX;
+  // Adjust fork arms to be relative to the new higher center
+  const forkTopY = sling.y - 100; 
   const bandY = sling.bandY;
 
-  const woodGradient = ctx.createLinearGradient(sling.x - 40, sling.y - 180, sling.x + 40, sling.y + 10);
+  const woodGradient = ctx.createLinearGradient(sling.x - 40, sling.y - 100, sling.x + 40, WORLD.groundY);
   woodGradient.addColorStop(0, "#7f5633");
   woodGradient.addColorStop(0.5, "#5a3a24");
   woodGradient.addColorStop(1, "#3c2719");
 
+  // Draw main handle down to the ground
   ctx.fillStyle = woodGradient;
-  ctx.fillRect(sling.x - 20, sling.y - 10, 40, 120);
+  const handleHeight = WORLD.groundY - (sling.y - 10);
+  ctx.fillRect(sling.x - 20 + shakeX, sling.y - 10, 40, handleHeight);
   ctx.strokeStyle = "rgba(216, 168, 106, 0.4)";
   ctx.lineWidth = 2;
-  ctx.strokeRect(sling.x - 20, sling.y - 10, 40, 120);
+  ctx.strokeRect(sling.x - 20 + shakeX, sling.y - 10, 40, handleHeight);
 
   ctx.strokeStyle = woodGradient;
   ctx.lineWidth = 24;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(leftArmX, sling.y + 4);
-  ctx.lineTo(leftArmX + 4, forkTopY + 24);
+  ctx.moveTo(leftArmX, sling.y + 10);
+  ctx.lineTo(leftArmX + 4, forkTopY);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(rightArmX, sling.y + 4);
-  ctx.lineTo(rightArmX - 4, forkTopY + 24);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(225, 178, 118, 0.75)";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(leftArmX + 2, sling.y - 6);
-  ctx.lineTo(leftArmX + 6, forkTopY + 22);
-  ctx.moveTo(rightArmX - 2, sling.y - 6);
-  ctx.lineTo(rightArmX - 6, forkTopY + 22);
+  ctx.moveTo(rightArmX, sling.y + 10);
+  ctx.lineTo(rightArmX - 4, forkTopY);
   ctx.stroke();
 
   if (!activeProjectile) return;
@@ -709,32 +708,16 @@ function drawSling() {
   const showBand = isDragging || activeProjectile.snapback;
 
   if (showBand) {
-    const bandGradient = ctx.createLinearGradient(leftArmX, bandY, px, py);
-    bandGradient.addColorStop(0, "#3a2618");
-    bandGradient.addColorStop(1, "#5f4028");
-    ctx.strokeStyle = bandGradient;
-    ctx.lineWidth = 7;
+    ctx.strokeStyle = "#3a2618";
+    ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.moveTo(leftArmX + 1, bandY);
     ctx.lineTo(px, py);
     ctx.lineTo(rightArmX - 1, bandY);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(233, 214, 187, 0.58)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(leftArmX + 1, bandY - 2);
-    ctx.lineTo(px, py);
-    ctx.lineTo(rightArmX - 1, bandY - 2);
-    ctx.stroke();
-
-    ctx.fillStyle = activeProjectile.validPull
-      ? "rgba(92, 65, 41, 0.98)"
-      : "rgba(120, 48, 48, 0.94)";
+    ctx.fillStyle = activeProjectile.validPull ? "#5c4129" : "#783030";
     ctx.fillRect(px - 14, py - 9, 28, 18);
-    ctx.strokeStyle = "rgba(207, 158, 108, 0.8)";
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(px - 14, py - 9, 28, 18);
   }
 }
 
@@ -742,33 +725,38 @@ function drawTrajectoryPreview() {
   if (!activeProjectile || !isDragging) return;
 
   const launch = computeLaunchVelocity();
-  const valid = Boolean(launch);
-  const startX = activeProjectile.x;
-  const startY = activeProjectile.y;
-  let vx = valid ? launch.vx : 0;
-  let vy = valid ? launch.vy : 0;
-  let x = startX;
-  let y = startY;
+  if (!launch) return;
 
-  ctx.fillStyle = valid ? "rgba(164, 255, 215, 0.68)" : "rgba(255, 128, 128, 0.7)";
-  for (let i = 0; i < 30; i += 1) {
-    const step = 1 / 60;
-    vx *= Math.max(0.7, 1 - 0.22 * step);
-    vy *= Math.max(0.7, 1 - 0.12 * step);
-    vy += WORLD.gravity * step;
-    x += vx * step;
-    y += vy * step;
+  // Use the same initial state as launchActiveProjectile
+  const tempP = {
+    x: activeProjectile.x,
+    y: activeProjectile.y,
+    vx: launch.vx,
+    vy: launch.vy,
+    airDrag: activeProjectile.seed.preset.airDrag,
+    rotation: 0,
+    angularV: 0
+  };
+
+  ctx.fillStyle = "rgba(164, 255, 215, 0.68)";
+  const steps = 45;
+  const subSteps = 3; 
+  for (let i = 0; i < steps; i += 1) {
+    for (let j = 0; j < subSteps; j++) {
+        integratePhysics(tempP, 1/60 / subSteps);
+    }
 
     if (i % 2 === 0) {
-      const alpha = Math.max(0.1, 1 - i / 32);
+      const alpha = Math.max(0.1, 1 - i / 50);
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.arc(x, y, valid ? 3.4 : 3.1, 0, Math.PI * 2);
+      ctx.arc(tempP.x, tempP.y, 3.4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
     }
-    if (y > WORLD.groundY) break;
+    
+    if (tempP.y > WORLD.groundY) break;
   }
+  ctx.globalAlpha = 1;
 }
 
 function drawFiredProjectiles() {
@@ -805,7 +793,7 @@ function drawGuide() {
   ctx.fillStyle = "rgba(137, 255, 206, 0.86)";
   ctx.font = "16px JetBrains Mono";
   ctx.textAlign = "left";
-  ctx.fillText("Очередь шаров слева. Тяни только назад и отпускай.", 34, 54);
+  ctx.fillText("Очередь шаров слева. Тяни в ЛЮБУЮ сторону и отпускай.", 34, 54);
 }
 
 function render() {
