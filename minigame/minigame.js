@@ -61,12 +61,15 @@ const ICON_CATALOG = [
   { name: "C++", src: "../icons/cpp.png", preset: "heavy" },
   { name: "C#", src: "../icons/csharp.png", preset: "medium" },
   { name: "Visual Studio", src: "../icons/visual_studio.png", preset: "medium" },
-  { name: "GitHub", src: "../icons/github.png", preset: "light" },
   { name: "ChatGPT", src: "../icons/chatgpt.png", preset: "light" },
   { name: "Python", src: "../icons/python.png", preset: "medium" },
   { name: "Linux", src: "../icons/linux.png", preset: "heavy" },
   { name: "Lua", src: "../icons/lua.png", preset: "light" },
   { name: "Windows", src: "../icons/windows.png", preset: "tank" },
+  { name: "Android", src: "../icons/android.png", preset: "medium" },
+  { name: "Angry Bird", src: "../icons/angry_bird.png", preset: "medium" },
+  { name: "Apple", src: "../icons/apple.png", preset: "medium" },
+  { name: "ASM", src: "../icons/asm.png", preset: "heavy" },
 ];
 
 const ASCII_TARGETS = [
@@ -596,40 +599,34 @@ function drawOrb(x, y, radius, icon, label, alpha, rotation) {
   ctx.translate(x, y);
   ctx.rotate(rotation);
 
-  const shellGradient = ctx.createRadialGradient(-radius * 0.3, -radius * 0.38, 6, 0, 0, radius + 8);
-  shellGradient.addColorStop(0, "rgba(206, 255, 233, 0.98)");
-  shellGradient.addColorStop(1, "rgba(46, 232, 150, 0.92)");
-  ctx.fillStyle = shellGradient;
-  ctx.beginPath();
-  ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(215, 255, 235, 0.95)";
-  ctx.lineWidth = 2.2;
-  ctx.stroke();
-
   const iconImg = icon?.img;
   if (iconImg && iconImg.complete && iconImg.naturalWidth > 0) {
-    const size = radius * 1.62;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, radius - 2.6, 0, Math.PI * 2);
-    ctx.clip();
+    // Draw only the icon, no sphere background
+    const size = radius * 2.2; // Slightly larger than the radius for better visibility
+    
+    // Optional: subtle shadow for depth
+    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    
     ctx.drawImage(iconImg, -size / 2, -size / 2, size, size);
-    ctx.restore();
   } else {
-    ctx.fillStyle = "#07362a";
-    ctx.font = `bold ${Math.max(10, radius * 0.42)}px JetBrains Mono`;
+    // Fallback if image fails to load
+    ctx.fillStyle = "#2ee896";
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#081821";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = "#081821";
+    ctx.font = `bold ${Math.max(10, radius * 0.5)}px JetBrains Mono`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(label, 0, 1);
+    ctx.fillText(label.substring(0, 2), 0, 1);
   }
-
-  ctx.beginPath();
-  ctx.strokeStyle = "rgba(12, 88, 59, 0.65)";
-  ctx.lineWidth = 1.2;
-  ctx.arc(0, 0, radius - 2.4, 0, Math.PI * 2);
-  ctx.stroke();
+  
   ctx.restore();
 }
 
@@ -670,35 +667,63 @@ function drawQueue() {
 
 function drawSling() {
   const shakeX = Math.sin(animationClock * 80) * sling.shake * 12;
-  const leftArmX = sling.x - 26 + shakeX;
-  const rightArmX = sling.x + 26 + shakeX;
-  // Adjust fork arms to be relative to the new higher center
-  const forkTopY = sling.y - 100; 
+  const leftArmX = sling.x - 22 + shakeX;
+  const rightArmX = sling.x + 22 + shakeX;
+  const forkTopY = sling.y - 120;
   const bandY = sling.bandY;
 
-  const woodGradient = ctx.createLinearGradient(sling.x - 40, sling.y - 100, sling.x + 40, WORLD.groundY);
-  woodGradient.addColorStop(0, "#7f5633");
-  woodGradient.addColorStop(0.5, "#5a3a24");
-  woodGradient.addColorStop(1, "#3c2719");
+  // Wood colors
+  const woodDark = "#4d3319";
+  const woodMid = "#734d26";
+  const woodLight = "#a6733c";
 
-  // Draw main handle down to the ground
+  const woodGradient = ctx.createLinearGradient(sling.x - 15, sling.y, sling.x + 15, WORLD.groundY);
+  woodGradient.addColorStop(0, woodMid);
+  woodGradient.addColorStop(0.5, woodDark);
+  woodGradient.addColorStop(1, "#261a0d");
+
+  // Draw main handle (thinner)
   ctx.fillStyle = woodGradient;
-  const handleHeight = WORLD.groundY - (sling.y - 10);
-  ctx.fillRect(sling.x - 20 + shakeX, sling.y - 10, 40, handleHeight);
-  ctx.strokeStyle = "rgba(216, 168, 106, 0.4)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(sling.x - 20 + shakeX, sling.y - 10, 40, handleHeight);
-
-  ctx.strokeStyle = woodGradient;
-  ctx.lineWidth = 24;
-  ctx.lineCap = "round";
+  const handleWidth = 18;
+  const handleX = sling.x - handleWidth / 2 + shakeX;
+  const handleHeight = WORLD.groundY - (sling.y - 5);
+  
+  // Rounded handle
   ctx.beginPath();
-  ctx.moveTo(leftArmX, sling.y + 10);
-  ctx.lineTo(leftArmX + 4, forkTopY);
+  ctx.roundRect(handleX, sling.y - 5, handleWidth, handleHeight, [0, 0, 8, 8]);
+  ctx.fill();
+  
+  // Handle detail/shading
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+  ctx.lineWidth = 1.5;
   ctx.stroke();
+
+  // Draw the "Y" fork arms (thinner and more elegant)
+  ctx.strokeStyle = woodMid;
+  ctx.lineWidth = 14;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // Left arm
   ctx.beginPath();
-  ctx.moveTo(rightArmX, sling.y + 10);
-  ctx.lineTo(rightArmX - 4, forkTopY);
+  ctx.moveTo(sling.x + shakeX, sling.y);
+  ctx.quadraticCurveTo(leftArmX - 5, sling.y, leftArmX, forkTopY);
+  ctx.stroke();
+
+  // Right arm
+  ctx.beginPath();
+  ctx.moveTo(sling.x + shakeX, sling.y);
+  ctx.quadraticCurveTo(rightArmX + 5, sling.y, rightArmX, forkTopY);
+  ctx.stroke();
+
+  // Wood highlights for realism
+  ctx.strokeStyle = woodLight;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(leftArmX - 3, forkTopY + 5);
+  ctx.lineTo(leftArmX - 1, forkTopY + 25);
+  ctx.moveTo(rightArmX + 3, forkTopY + 5);
+  ctx.lineTo(rightArmX + 1, forkTopY + 25);
   ctx.stroke();
 
   if (!activeProjectile) return;
@@ -708,16 +733,37 @@ function drawSling() {
   const showBand = isDragging || activeProjectile.snapback;
 
   if (showBand) {
-    ctx.strokeStyle = "#3a2618";
-    ctx.lineWidth = 8;
+    // Realistic rubber bands
+    ctx.lineCap = "round";
+    
+    // Back band
+    ctx.strokeStyle = "#3d2616";
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.moveTo(leftArmX + 1, bandY);
+    ctx.moveTo(rightArmX, bandY);
     ctx.lineTo(px, py);
-    ctx.lineTo(rightArmX - 1, bandY);
     ctx.stroke();
 
-    ctx.fillStyle = activeProjectile.validPull ? "#5c4129" : "#783030";
-    ctx.fillRect(px - 14, py - 9, 28, 18);
+    // Front band (slightly lighter)
+    ctx.strokeStyle = "#5c3a21";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(leftArmX, bandY);
+    ctx.lineTo(px, py);
+    ctx.stroke();
+
+    // Leather pouch
+    ctx.fillStyle = "#4a2c14";
+    ctx.strokeStyle = "#2b1a0a";
+    ctx.lineWidth = 1;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(Math.atan2(py - bandY, px - sling.x));
+    ctx.beginPath();
+    ctx.roundRect(-16, -10, 32, 20, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
