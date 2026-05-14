@@ -371,62 +371,89 @@ function setupMatrixRain() {
 function setupMaxButton() {
   const button = document.getElementById("max-btn");
   const zone = document.querySelector(".max-zone");
-  const laugh = document.getElementById("ascii-laugh");
-  if (!button || !zone || !laugh) return;
+  if (!button || !zone) return;
 
-  let hideLaughTimer = 0;
+  let isMoving = false;
+  let isDetached = false;
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
 
   function moveAway(pointerX, pointerY) {
-    const zoneRect = zone.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
+    if (isMoving) return;
+
+    if (!isDetached) {
+      const rect = button.getBoundingClientRect();
+      button.style.transition = "none";
+      document.body.appendChild(button);
+      button.style.position = "absolute";
+      button.style.left = `${rect.left + window.scrollX}px`;
+      button.style.top = `${rect.top + window.scrollY}px`;
+      button.style.margin = "0";
+      button.style.zIndex = "9999";
+      // Force reflow
+      button.getBoundingClientRect();
+      button.style.transition = "";
+      isDetached = true;
+    }
+
     const currentX = button.offsetLeft;
     const currentY = button.offsetTop;
-    const buttonCenterX = zoneRect.left + currentX + buttonRect.width / 2;
-    const buttonCenterY = zoneRect.top + currentY + buttonRect.height / 2;
-    const fromX = pointerX ?? zoneRect.left + zoneRect.width / 2;
-    const fromY = pointerY ?? zoneRect.top + zoneRect.height / 2;
+    const buttonRect = button.getBoundingClientRect();
+    
+    const buttonCenterX = currentX + buttonRect.width / 2;
+    const buttonCenterY = currentY + buttonRect.height / 2;
+    const fromX = pointerX ?? buttonCenterX;
+    const fromY = pointerY ?? buttonCenterY;
 
-    let nx = currentX + (buttonCenterX < fromX ? -1 : 1) * (60 + Math.random() * 70);
-    let ny = currentY + (buttonCenterY < fromY ? -1 : 1) * (24 + Math.random() * 40);
+    // Jump shorter distance across the screen
+    let nx = currentX + (buttonCenterX < fromX ? -1 : 1) * (50 + Math.random() * 80);
+    let ny = currentY + (buttonCenterY < fromY ? -1 : 1) * (40 + Math.random() * 60);
 
-    const maxX = Math.max(0, zoneRect.width - buttonRect.width);
-    const maxY = Math.max(0, zoneRect.height - buttonRect.height);
-    nx = clamp(nx, 0, maxX);
-    ny = clamp(ny, 0, maxY);
+    const maxX = Math.max(0, document.documentElement.scrollWidth - buttonRect.width - 20);
+    const maxY = Math.max(0, document.documentElement.scrollHeight - buttonRect.height - 20);
+    
+    nx = clamp(nx, 20, maxX);
+    ny = clamp(ny, 20, maxY);
 
-    if (Math.abs(nx - currentX) < 6) nx = Math.random() * maxX;
-    if (Math.abs(ny - currentY) < 6) ny = Math.random() * maxY;
+    if (Math.abs(nx - currentX) < 10) nx = Math.random() * maxX;
+    if (Math.abs(ny - currentY) < 10) ny = Math.random() * maxY;
 
     button.style.left = `${Math.round(nx)}px`;
     button.style.top = `${Math.round(ny)}px`;
+
+    const dxDist = nx - currentX;
+    const tilt = dxDist > 0 ? 15 + Math.random() * 20 : -(15 + Math.random() * 20);
+    button.style.transform = `rotate(${tilt}deg) scale(0.9)`;
+
+    isMoving = true;
+    clearTimeout(button.moveTimeout);
+    button.moveTimeout = setTimeout(() => {
+      button.style.transform = "rotate(0deg) scale(1)";
+      isMoving = false;
+    }, 400);
   }
 
-  zone.addEventListener("pointermove", (event) => {
+  document.addEventListener("pointermove", (event) => {
+    if (isMoving) return;
     const buttonRect = button.getBoundingClientRect();
     const dx = event.clientX - (buttonRect.left + buttonRect.width / 2);
     const dy = event.clientY - (buttonRect.top + buttonRect.height / 2);
     const distance = Math.hypot(dx, dy);
-    if (distance < 120) {
-      moveAway(event.clientX, event.clientY);
+    if (distance < 100) {
+      moveAway(event.pageX, event.pageY);
     }
   });
 
   button.addEventListener("pointerenter", (event) => {
-    moveAway(event.clientX, event.clientY);
+    moveAway(event.pageX, event.pageY);
   });
 
   button.addEventListener("click", (event) => {
     event.preventDefault();
-    laugh.classList.add("show");
-    clearTimeout(hideLaughTimer);
-    hideLaughTimer = window.setTimeout(() => {
-      laugh.classList.remove("show");
-    }, 1000);
-    moveAway(event.clientX, event.clientY);
+    window.open("https://rutube.ru/video/c6cc4d620b1d4338901770a44b3e82f4/", "_blank");
+    moveAway(event.pageX, event.pageY);
   });
 }
 
