@@ -141,10 +141,10 @@ function integratePhysics(p, step) {
 
   // Apply gravity for the next step
   p.vy += WORLD.gravity * step;
-  
-  p.rotation += (p.vx * 0.002 + p.angularV) * step * 60;
-}
 
+  // No continuous spin based on velocity - only slow initial rotation
+  p.rotation += p.angularV * step * 60;
+}
 function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -340,7 +340,7 @@ function launchActiveProjectile() {
     fadeAge: 0,
     alpha: 1,
     rotation: 0,
-    angularV: rand(-2, 2),
+    angularV: rand(-0.1, 0.1), // Nearly no spin, very calm
     restTimer: 0,
     sleeping: false,
     label: icon.name,
@@ -348,7 +348,7 @@ function launchActiveProjectile() {
   };
 
   firedProjectiles.push(fired);
-  if (firedProjectiles.length > 15) {
+  if (firedProjectiles.length > 256) {
     firedProjectiles.shift();
   }
 
@@ -899,5 +899,8 @@ restartBtn.addEventListener("click", resetRound);
 
 preloadIcons();
 rebuildStaticBackground();
+resetRound();
+requestAnimationFrame(loop);
+und();
 resetRound();
 requestAnimationFrame(loop);
