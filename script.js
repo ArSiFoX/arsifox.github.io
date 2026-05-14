@@ -203,7 +203,7 @@ function setupPageSearch() {
 
     const candidates = Array.from(
       document.querySelectorAll(
-        "main h1, main h2, main h3, main p, main span, footer h2, footer p, footer a, footer button"
+        "main h1, main h2, main h3, main p, main span, main a, footer h2, footer p, footer a, footer button"
       )
     );
     const hits = candidates.filter((el) => {
