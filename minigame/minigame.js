@@ -18,10 +18,43 @@ const scoreEl = document.getElementById("score");
 const targetsLeftEl = document.getElementById("targets-left");
 const projectileNameEl = document.getElementById("projectile-name");
 const restartBtn = document.getElementById("restart-btn");
+const fullscreenBtn = document.getElementById("fullscreen-btn");
 
 if (!canvas || !ctx || !scoreEl || !targetsLeftEl || !projectileNameEl || !restartBtn) {
   throw new Error("Game init failed: required elements are missing.");
 }
+
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener("click", () => {
+    const wrap = document.querySelector(".canvas-wrap");
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (wrap.requestFullscreen) {
+        wrap.requestFullscreen();
+      } else if (wrap.webkitRequestFullscreen) {
+        wrap.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  });
+}
+
+function handleFullscreenChange() {
+  if (fullscreenBtn) {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      fullscreenBtn.textContent = "Свернуть";
+    } else {
+      fullscreenBtn.textContent = "На весь экран";
+    }
+  }
+}
+
+document.addEventListener("fullscreenchange", handleFullscreenChange);
+document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
 
 const PROJECTILE_PRESETS = {
   light: {
