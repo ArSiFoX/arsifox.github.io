@@ -442,7 +442,7 @@ function setupGravityCrash() {
 
     const targets = Array.from(
       document.querySelectorAll(
-        ".site-header, .hero, #about, #stack, .site-footer, .info-card, .chips > *, .contacts .contact-btn, .max-zone"
+        ".site-header, .hero, #about, #stack, #projects, .site-footer, .info-card, .project-card, .chips > *, .contacts .contact-btn, .max-zone"
       )
     );
     const activeAnimations = [];
@@ -486,6 +486,31 @@ function setupGravityCrash() {
   });
 }
 
+function setupImageViewer() {
+  const viewer = document.getElementById('image-viewer');
+  const imgEl = document.getElementById('viewer-image');
+  const backdrop = viewer.querySelector('.viewer-backdrop');
+  const closeBtn = viewer.querySelector('.viewer-close');
+  
+  if (!viewer || !imgEl || !backdrop || !closeBtn) return;
+
+  function closeViewer() {
+    viewer.classList.remove('is-open');
+    viewer.setAttribute('aria-hidden', 'true');
+  }
+
+  backdrop.addEventListener('click', closeViewer);
+  closeBtn.addEventListener('click', closeViewer);
+
+  document.querySelectorAll('.cascade-img').forEach(img => {
+    img.addEventListener('click', () => {
+      imgEl.src = img.src;
+      viewer.classList.add('is-open');
+      viewer.setAttribute('aria-hidden', 'false');
+    });
+  });
+}
+
 setupReveal();
 setupSmoothNavigation();
 setupTheme();
@@ -499,3 +524,4 @@ setupTiltCards();
 setupMatrixRain();
 setupMaxButton();
 setupGravityCrash();
+setupImageViewer();

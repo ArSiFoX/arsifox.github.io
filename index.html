@@ -24,6 +24,7 @@
       <nav class="site-nav">
         <a href="#about">Обо мне</a>
         <a href="#stack">Стек</a>
+        <a href="#projects">Мои проекты</a>
         <a href="#contacts">Контакты</a>
         <a class="minigames-link" href="./minigame/minigame.html" target="_blank" rel="noreferrer">Мини игры</a>
       </nav>
@@ -106,6 +107,36 @@
         <button id="danger-stack" type="button" class="chip-button">sudo rm -rf /*</button>
       </div>
     </section>
+
+    <section id="projects" class="section reveal">
+      <h2>Мои проекты</h2>
+      <div class="projects-grid">
+        <article class="project-card tilt-card">
+          <h3>Цифровой двойник турбины</h3>
+          <p>Интерактивная модель и симуляция турбины.</p>
+          <a href="https://arsifox.ru/caseinturbine" class="btn btn-primary project-link" target="_blank" rel="noreferrer">Смотреть проект</a>
+        </article>
+        
+        <article class="project-card tilt-card">
+          <h3>SLControl</h3>
+          <p>Мой флагманский проект. Комплексная система управления и мониторинга с богатым функционалом. Программа удостоена патентования.</p>
+          <div class="cascade-gallery">
+            <img src="./project_images/SLControl_screenshot1.png" alt="SLControl Screenshot 1" class="cascade-img">
+            <img src="./project_images/SLControl_screenshot2.png" alt="SLControl Screenshot 2" class="cascade-img">
+          </div>
+        </article>
+
+        <article class="project-card tilt-card">
+          <h3>АЭУ-Аналитик</h3>
+          <p>Мой второй по сложности проект. Инструмент для аналитики и обработки данных АЭУ.</p>
+          <div class="cascade-gallery">
+            <img src="./project_images/AEU_Analytic_screenshot1.png" alt="AEU Analytic Screenshot 1" class="cascade-img">
+            <img src="./project_images/AEU_Analytic_screenshot2.png" alt="AEU Analytic Screenshot 2" class="cascade-img">
+            <img src="./project_images/AEU_Analytic_screenshot3.png" alt="AEU Analytic Screenshot 3" class="cascade-img">
+          </div>
+        </article>
+      </div>
+    </section>
   </main>
 
   <footer id="contacts" class="site-footer section reveal">
@@ -124,6 +155,12 @@
   xD</pre>
     </div>
   </footer>
+
+  <div id="image-viewer" class="image-viewer" aria-hidden="true">
+    <div class="viewer-backdrop"></div>
+    <img id="viewer-image" src="" alt="Full size view">
+    <button class="viewer-close" aria-label="Закрыть">✕</button>
+  </div>
 
   <script src="./script.js"></script>
 </body>
