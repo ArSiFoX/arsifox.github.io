@@ -118,6 +118,9 @@ let accumulator = 0;
 let animationClock = 0;
 let score = 0;
 
+let fps = 0;
+let frameTimes = [];
+
 let targets = [];
 let particles = [];
 let firedProjectiles = [];
@@ -842,6 +845,15 @@ function drawGuide() {
   ctx.fillText("Очередь шаров слева. Тяни в ЛЮБУЮ сторону и отпускай.", 34, 54);
 }
 
+function drawFPS() {
+  ctx.save();
+  ctx.fillStyle = "rgba(72, 255, 168, 0.8)";
+  ctx.font = "bold 18px JetBrains Mono";
+  ctx.textAlign = "right";
+  ctx.fillText(`FPS: ${fps}`, WORLD.width - 34, 54);
+  ctx.restore();
+}
+
 function render() {
   ctx.drawImage(backgroundCanvas, 0, 0);
   drawTrajectoryPreview();
@@ -852,6 +864,7 @@ function render() {
   drawActiveProjectile();
   drawParticles();
   drawGuide();
+  drawFPS();
 }
 
 function resetRound() {
@@ -877,6 +890,14 @@ function loop(timestamp) {
   lastTimestamp = timestamp;
   animationClock = timestamp / 1000;
   accumulator += frame;
+
+  // FPS calculation
+  const now = performance.now();
+  while (frameTimes.length > 0 && frameTimes[0] <= now - 1000) {
+    frameTimes.shift();
+  }
+  frameTimes.push(now);
+  fps = frameTimes.length;
 
   let steps = 0;
   while (accumulator >= SIM.fixedStep && steps < SIM.maxSubsteps) {
