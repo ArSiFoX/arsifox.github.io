@@ -18,6 +18,8 @@
         <h1>IT Осада: ASCII Разнос</h1>
       </div>
       <div class="actions">
+        <button id="shop-btn" class="action-btn shop-btn" type="button">Магазин 💎</button>
+        <button id="settings-btn" class="action-btn" type="button">Настройки ⚙️</button>
         <button id="fullscreen-btn" class="action-btn" type="button">На весь экран</button>
         <button id="restart-btn" class="action-btn" type="button">Новый раунд</button>
         <a class="action-btn back-btn" href="../index.html">Вернуться на главный сайт</a>
@@ -25,6 +27,7 @@
     </header>
 
     <section class="hud">
+      <p>Уровень: <span id="game-level">1</span></p>
       <p>Активный шар: <span id="projectile-name">...</span></p>
       <p>Счёт: <span id="score">0</span></p>
       <p>Цели: <span id="targets-left">0</span></p>
@@ -34,6 +37,93 @@
     <section class="canvas-wrap">
       <canvas id="game-canvas" width="1600" height="900" aria-label="Мини-игра в стиле Angry Birds"></canvas>
     </section>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Магазин улучшений</h2>
+          <button id="close-shop" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body shop-items">
+          <div class="shop-item" data-item="triple">
+            <div class="item-info">
+              <span class="item-icon">🚀</span>
+              <span class="item-name">Triple Shot (30с)</span>
+            </div>
+            <button class="buy-btn" data-cost="2000">2000 💎</button>
+          </div>
+          <div class="shop-item" data-item="explosive">
+            <div class="item-info">
+              <span class="item-icon">💣</span>
+              <span class="item-name">Explosive (30с)</span>
+            </div>
+            <button class="buy-btn" data-cost="3500">3500 💎</button>
+          </div>
+          <div class="shop-item" data-item="reinforced">
+            <div class="item-info">
+              <span class="item-icon">💎</span>
+              <span class="item-name">Усиленные ядра (раунд)</span>
+            </div>
+            <button class="buy-btn" data-cost="5000">5000 💎</button>
+          </div>
+          <div class="shop-item" data-item="airstrike">
+            <div class="item-info">
+              <span class="item-icon">🌩️</span>
+              <span class="item-name">Авиаудар (разово)</span>
+            </div>
+            <button class="buy-btn" data-cost="7500">7500 💎</button>
+          </div>
+          <div class="shop-item" data-item="income">
+            <div class="item-info">
+              <span class="item-icon">📈</span>
+              <span class="item-name">Инвестиции (+10% Фарм)</span>
+            </div>
+            <button class="buy-btn" data-cost="1500">1500 💎</button>
+          </div>
+          <div class="shop-item" data-item="bands">
+            <div class="item-info">
+              <span class="item-icon">🎗️</span>
+              <span class="item-name">Эластичные тяги (+растяжение)</span>
+            </div>
+            <button class="buy-btn" data-cost="3000">3000 💎</button>
+          </div>
+
+          <div class="shop-item" data-item="tension">
+            <div class="item-info">
+              <span class="item-icon">⚡</span>
+              <span class="item-name">Тяжёлое натяжение (+скорость)</span>
+            </div>
+            <button class="buy-btn" data-cost="4500">4500 💎</button>
+          </div>
+          <div class="shop-item" data-item="sight">
+            <div class="item-info">
+              <span class="item-icon">🎯</span>
+              <span class="item-name">Лазерный прицел (+длина)</span>
+            </div>
+            <button class="buy-btn" data-cost="2500">2500 💎</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Настройки игры</h2>
+          <button id="close-settings" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body settings-body">
+          <div class="setting-row">
+            <label for="game-scale">Масштаб игры:</label>
+            <input type="range" id="game-scale" min="0.5" max="1.5" step="0.05" value="1">
+            <span id="scale-value">100%</span>
+          </div>
+          <p class="setting-note">Изменение масштаба подстраивает размер окна игры под ваш экран.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="./minigame.js"></script>
