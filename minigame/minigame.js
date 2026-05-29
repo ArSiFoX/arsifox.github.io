@@ -13,12 +13,12 @@ if (isLightTheme) {
 
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas?.getContext("2d");
-
 const scoreEl = document.getElementById("score");
 const targetsLeftEl = document.getElementById("targets-left");
 const projectileNameEl = document.getElementById("projectile-name");
 const restartBtn = document.getElementById("restart-btn");
 const fullscreenBtn = document.getElementById("fullscreen-btn");
+
 const shopBtn = document.getElementById("shop-btn");
 const settingsBtn = document.getElementById("settings-btn");
 const shopModal = document.getElementById("shop-modal");
@@ -28,10 +28,80 @@ const closeSettingsBtn = document.getElementById("close-settings");
 const buyBtns = document.querySelectorAll(".buy-btn");
 const gameScaleInput = document.getElementById("game-scale");
 const scaleValueDisplay = document.getElementById("scale-value");
+const hardResetBtn = document.getElementById("hard-reset-btn");
 
 if (!canvas || !ctx || !scoreEl || !targetsLeftEl || !projectileNameEl || !restartBtn || !shopBtn || !settingsBtn || !shopModal || !settingsModal || !closeShopBtn || !closeSettingsBtn) {
   throw new Error("Game init failed: required elements are missing.");
 }
+
+const WEAPONS = {
+  slingshot: { name: "Рогатка", aimType: "pull", gravityMult: 1.0, velocity: 1.0, damage: 1.0, colors: ["#4d3319", "#734d26", "#a6733c"], rebirth: 0 },
+  cannon: { name: "Пушка", aimType: "aim", gravityMult: 1.0, velocity: 1.5, damage: 1.5, colors: ["#263238", "#546e7a", "#90a4ae"], rebirth: 10 },
+  ballista: { name: "Баллиста", aimType: "pull", gravityMult: 0.8, velocity: 2.2, damage: 2.0, colors: ["#3e2723", "#5d4037", "#8d6e63"], rebirth: 15 },
+  railgun: { name: "Рельсотрон", aimType: "aim", gravityMult: 0.1, velocity: 4.5, damage: 3.0, colors: ["#0d47a1", "#0288d1", "#00e5ff"], rebirth: 20 },
+  antimatter: { name: "Антиматерия", aimType: "aim", gravityMult: 0, velocity: 2.0, damage: 5.0, colors: ["#4a148c", "#7b1fa2", "#ea80fc"], rebirth: 25 },
+};
+
+let currentWeapon = localStorage.getItem("game-weapon") || "slingshot";
+if (!WEAPONS[currentWeapon]) {
+  currentWeapon = "slingshot";
+}
+
+const arsenalBtn = document.getElementById("arsenal-btn");
+const arsenalModal = document.getElementById("arsenal-modal");
+const closeArsenalBtn = document.getElementById("close-arsenal");
+const weaponItems = document.querySelectorAll(".weapon-item");
+
+if (!arsenalBtn || !arsenalModal || !closeArsenalBtn) {
+  throw new Error("Arsenal UI elements missing");
+}
+
+arsenalBtn.addEventListener("click", () => {
+  arsenalModal.classList.remove("hidden");
+  updateArsenalButtons();
+});
+
+closeArsenalBtn.addEventListener("click", () => {
+  arsenalModal.classList.add("hidden");
+});
+
+function updateArsenalButtons() {
+  weaponItems.forEach(item => {
+    const wKey = item.dataset.weapon;
+    const w = WEAPONS[wKey];
+    const btn = item.querySelector(".select-weapon-btn");
+    
+    item.classList.remove("active", "locked");
+    
+    if (rebirthCount >= w.rebirth) {
+      if (currentWeapon === wKey) {
+        item.classList.add("active");
+        btn.textContent = "Выбрано";
+        btn.disabled = true;
+      } else {
+        btn.textContent = "Выбрать";
+        btn.disabled = false;
+      }
+    } else {
+      item.classList.add("locked");
+      btn.textContent = `Нужно ${w.rebirth} перер.`;
+      btn.disabled = true;
+    }
+  });
+}
+
+weaponItems.forEach(item => {
+  const btn = item.querySelector(".select-weapon-btn");
+  btn.addEventListener("click", () => {
+    const wKey = item.dataset.weapon;
+    if (rebirthCount >= WEAPONS[wKey].rebirth) {
+      currentWeapon = wKey;
+      localStorage.setItem("game-weapon", currentWeapon);
+      updateArsenalButtons();
+      spawnBurst(WORLD.width / 2, WORLD.height / 2, 40);
+    }
+  });
+});
 
 // UI & Settings logic
 shopBtn.addEventListener("click", () => {
@@ -70,10 +140,22 @@ if (gameScaleInput) {
   }
 }
 
+if (hardResetBtn) {
+  hardResetBtn.addEventListener("click", () => {
+    if (confirm("Вы уверены, что хотите удалить весь прогресс? Это действие необратимо.")) {
+      localStorage.removeItem("game-rebirths");
+      localStorage.removeItem("game-weapon");
+      // Optional: keep scale settings or remove them too. Let's keep scale.
+      window.location.reload();
+    }
+  });
+}
+
 let score = 0;
 let gameLevel = 1;
 let scoreMultiplier = 1;
 let incomeMultiplier = 1;
+let rebirthCount = parseInt(localStorage.getItem("game-rebirths") || "0");
 
 let powerUps = {
   tripleShot: 0,
@@ -90,6 +172,7 @@ const SHOP_PRICES = {
   bands: 2000,
   tension: 3000,
   sight: 1500,
+  rebirth: 1000000,
 };
 
 const SHOP_LEVELS = {
@@ -101,6 +184,7 @@ const SHOP_LEVELS = {
   bands: 0,
   tension: 0,
   sight: 0,
+  rebirth: 0,
 };
 
 const PRICE_GROWTH = 1.35; // Prices increase by 35% per purchase
@@ -108,10 +192,17 @@ const PRICE_GROWTH = 1.35; // Prices increase by 35% per purchase
 function updateShopButtons() {
   buyBtns.forEach(btn => {
     const item = btn.closest(".shop-item").dataset.item;
-    const currentPrice = Math.floor(SHOP_PRICES[item]);
-    const currentLevel = SHOP_LEVELS[item];
+    let currentPrice;
     
-    btn.innerHTML = `${currentPrice} 💎 <br><span style="font-size: 0.7em; opacity: 0.8;">Ур. ${currentLevel}</span>`;
+    if (item === "rebirth") {
+      currentPrice = 1000000 * (rebirthCount + 1);
+      btn.textContent = `${(currentPrice / 1000000).toFixed(1)}M 💎`;
+    } else {
+      currentPrice = Math.floor(SHOP_PRICES[item]);
+      const currentLevel = SHOP_LEVELS[item];
+      btn.innerHTML = `${currentPrice} 💎 <br><span style="font-size: 0.7em; opacity: 0.8;">Ур. ${currentLevel}</span>`;
+    }
+    
     btn.disabled = Math.floor(score) < currentPrice;
   });
 }
@@ -119,16 +210,24 @@ function updateShopButtons() {
 buyBtns.forEach(btn => {
   btn.addEventListener("click", () => {
     const item = btn.closest(".shop-item").dataset.item;
-    const currentPrice = Math.floor(SHOP_PRICES[item]);
+    let currentPrice;
+    
+    if (item === "rebirth") {
+      currentPrice = 1000000 * (rebirthCount + 1);
+    } else {
+      currentPrice = Math.floor(SHOP_PRICES[item]);
+    }
 
     if (Math.floor(score) >= currentPrice) {
       score -= currentPrice;
-      SHOP_PRICES[item] *= PRICE_GROWTH; // Dynamic price increase
-      SHOP_LEVELS[item]++; // Increment level
+      if (item !== "rebirth") {
+        SHOP_PRICES[item] *= PRICE_GROWTH; // Dynamic price increase
+        SHOP_LEVELS[item]++; // Increment level
+      }
       updateHud();
       applyShopItem(item);
       updateShopButtons();
-      spawnBurst(WORLD.width / 2, WORLD.height / 2, 30);
+      spawnBurst(WORLD.width / 2, WORLD.height / 2, 60);
     }
   });
 });
@@ -147,7 +246,10 @@ function addScore(amount) {
     powerUpMult *= 10;
   }
 
-  score += amount * scoreMultiplier * incomeMultiplier * powerUpMult;
+  // Rebirth bonus: +10% per rebirth
+  const rebirthMult = 1 + rebirthCount * 0.1;
+
+  score += amount * scoreMultiplier * incomeMultiplier * powerUpMult * rebirthMult;
   updateHud();
 }
 
@@ -200,7 +302,25 @@ function applyShopItem(item) {
     case "sight":
       SLING_MODIFIERS.previewStepsAdd += 5;
       break;
+    case "rebirth":
+      doRebirth();
+      break;
   }
+}
+
+function doRebirth() {
+  rebirthCount++;
+  localStorage.setItem("game-rebirths", rebirthCount);
+  
+  // Reset progress by resetting round
+  resetRound();
+  
+  // ResetRound clears score, levels, etc. 
+  // but let's make sure score is 0 explicitly if resetRound changes
+  score = 0; 
+  updateHud();
+
+  spawnBurst(WORLD.width / 2, WORLD.height / 2, 100);
 }
 
 function triggerAirStrike() {
@@ -465,7 +585,8 @@ function integratePhysics(p, step) {
   p.y += p.vy * step;
 
   // Apply gravity for the next step
-  p.vy += WORLD.gravity * step;
+  const gravMult = p.gravityMult !== undefined ? p.gravityMult : 1;
+  p.vy += WORLD.gravity * gravMult * step;
 
   // No continuous spin based on velocity - only slow initial rotation
   p.rotation += p.angularV * step * 60;
@@ -563,9 +684,13 @@ function updateHud() {
   const aliveTargets = targets.filter((t) => !t.destroyed).length;
   targetsLeftEl.textContent = String(aliveTargets);
 
-  // Show level in HUD if possible, or just update internal state
+  // Show level in HUD
   const levelEl = document.getElementById("game-level");
   if (levelEl) levelEl.textContent = String(gameLevel);
+
+  // Show rebirth in HUD
+  const rebirthEl = document.getElementById("rebirth-count");
+  if (rebirthEl) rebirthEl.textContent = String(rebirthCount);
 }
 function worldFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
@@ -593,24 +718,30 @@ function canStartDrag(point) {
 function updateDragPoint(point) {
   if (!activeProjectile) return;
 
-  // Calculate offsets from band height
   let dx = point.x - sling.x;
   let dy = point.y - sling.bandY;
 
-  // Constraint: Limit pull distance to maxStretch (but allow any direction)
   const maxStretch = sling.maxStretch + SLING_MODIFIERS.maxStretchAdd;
-  const pullDistance = Math.hypot(dx, dy);
+  let pullDistance = Math.hypot(dx, dy);
+
   if (pullDistance > maxStretch) {
     const ratio = maxStretch / pullDistance;
     dx *= ratio;
     dy *= ratio;
+    pullDistance = maxStretch;
   }
 
-  activeProjectile.x = sling.x + dx;
-  activeProjectile.y = sling.bandY + dy;
+  const w = WEAPONS[currentWeapon];
+  if (w.aimType === "aim") {
+    activeProjectile.x = sling.x;
+    activeProjectile.y = sling.bandY;
+    activeProjectile.dragPoint = { x: sling.x + dx, y: sling.bandY + dy };
+  } else {
+    activeProjectile.x = sling.x + dx;
+    activeProjectile.y = sling.bandY + dy;
+  }
 
-  // Update pull metrics for launch calculation
-  activeProjectile.pullDistance = Math.hypot(dx, dy);
+  activeProjectile.pullDistance = pullDistance;
   activeProjectile.validPull = activeProjectile.pullDistance >= LAUNCH.minPullDistance;
 }
 function beginSnapback() {
@@ -618,6 +749,7 @@ function beginSnapback() {
   activeProjectile.snapback = {
     fromX: activeProjectile.x,
     fromY: activeProjectile.y,
+    fromDragPoint: activeProjectile.dragPoint ? { x: activeProjectile.dragPoint.x, y: activeProjectile.dragPoint.y } : null,
     t: 0,
     duration: LAUNCH.snapDuration,
   };
@@ -626,17 +758,28 @@ function beginSnapback() {
 function computeLaunchVelocity() {
   if (!activeProjectile) return null;
 
-  // Vector from Projectile to Band center
-  const dx = sling.x - activeProjectile.x;
-  const dy = sling.bandY - activeProjectile.y;
-  const pullDistance = Math.hypot(dx, dy);
+  const w = WEAPONS[currentWeapon];
+  let dx, dy, pullDistance;
+
+  if (w.aimType === "aim") {
+    if (!activeProjectile.dragPoint) return null;
+    dx = activeProjectile.dragPoint.x - sling.x;
+    dy = activeProjectile.dragPoint.y - sling.bandY;
+    pullDistance = Math.hypot(dx, dy);
+  } else {
+    dx = sling.x - activeProjectile.x;
+    dy = sling.bandY - activeProjectile.y;
+    pullDistance = Math.hypot(dx, dy);
+  }
 
   if (pullDistance < LAUNCH.minPullDistance) {
     return null;
   }
 
   // The speed is proportional to how far we pull
-  const velocityMultiplier = LAUNCH.velocityMultiplier * SLING_MODIFIERS.velocityMult;
+  const rebirthMult = 1 + rebirthCount * 0.1;
+  const weaponMult = WEAPONS[currentWeapon].velocity;
+  const velocityMultiplier = LAUNCH.velocityMultiplier * SLING_MODIFIERS.velocityMult * rebirthMult * weaponMult;
   const speedScale = velocityMultiplier / Math.sqrt(activeProjectile.seed.preset.mass);
   
   // VX and VY must be a direct reflection of DX and DY
@@ -648,6 +791,9 @@ function computeLaunchVelocity() {
 }
 
 function createFiredProjectile(x, y, vx, vy, preset, icon, isExplosive = false) {
+  const rebirthMult = 1 + rebirthCount * 0.1;
+  const weaponDmg = WEAPONS[currentWeapon].damage;
+  const weaponGravity = WEAPONS[currentWeapon].gravityMult !== undefined ? WEAPONS[currentWeapon].gravityMult : 1;
   const mass = (preset?.mass || 0.5) * PROJECTILE_MODIFIERS.massMult;
   return {
     id: nextId(),
@@ -657,10 +803,11 @@ function createFiredProjectile(x, y, vx, vy, preset, icon, isExplosive = false) 
     vy,
     r: preset?.radius || 8,
     mass,
+    gravityMult: weaponGravity,
     restitution: preset?.restitution || 0.5,
     groundFriction: preset?.groundFriction || 0.8,
     airDrag: preset?.airDrag || 0.1,
-    damage: (preset?.damage || 10) * PROJECTILE_MODIFIERS.damageMult,
+    damage: (preset?.damage || 10) * PROJECTILE_MODIFIERS.damageMult * rebirthMult * weaponDmg,
     lifetime: 4.5,
     fadeDuration: 0.5,
     age: 0,
@@ -1043,9 +1190,18 @@ function updateActiveProjectile(step) {
   const eased = 1 - Math.pow(1 - t, 3);
   activeProjectile.x = snap.fromX + (sling.x - snap.fromX) * eased;
   activeProjectile.y = snap.fromY + (sling.bandY - snap.fromY) * eased;
+
+  if (snap.fromDragPoint) {
+    activeProjectile.dragPoint = {
+      x: snap.fromDragPoint.x + (sling.x - snap.fromDragPoint.x) * eased,
+      y: snap.fromDragPoint.y + (sling.bandY - snap.fromDragPoint.y) * eased
+    };
+  }
+
   if (t >= 1) {
     activeProjectile.x = sling.x;
     activeProjectile.y = sling.bandY;
+    activeProjectile.dragPoint = null;
     activeProjectile.snapback = null;
   }
 }
@@ -1261,103 +1417,143 @@ function drawQueue() {
 }
 
 function drawSling() {
+  const w = WEAPONS[currentWeapon];
+  const color1 = w.colors[0];
+  const color2 = w.colors[1];
+  const color3 = w.colors[2];
+
   const shakeX = Math.sin(animationClock * 80) * sling.shake * 12;
-  const leftArmX = sling.x - 22 + shakeX;
-  const rightArmX = sling.x + 22 + shakeX;
-  const forkTopY = sling.y - 120;
-  const bandY = sling.bandY;
+  const shakeY = Math.cos(animationClock * 70) * sling.shake * 8;
+  const cx = sling.x + shakeX;
+  const cy = sling.y + shakeY;
 
-  // Wood colors
-  const woodDark = "#4d3319";
-  const woodMid = "#734d26";
-  const woodLight = "#a6733c";
+  // Draw Base
+  if (w.aimType === "pull") {
+    // Slingshot / Ballista style
+    const leftArmX = cx - 22;
+    const rightArmX = cx + 22;
+    const forkTopY = cy - 120;
+    const bandY = sling.bandY;
 
-  const woodGradient = ctx.createLinearGradient(sling.x - 15, sling.y, sling.x + 15, WORLD.groundY);
-  woodGradient.addColorStop(0, woodMid);
-  woodGradient.addColorStop(0.5, woodDark);
-  woodGradient.addColorStop(1, "#261a0d");
+    const baseGrad = ctx.createLinearGradient(cx - 15, cy, cx + 15, WORLD.groundY);
+    baseGrad.addColorStop(0, color2);
+    baseGrad.addColorStop(0.5, color1);
+    baseGrad.addColorStop(1, color1);
 
-  // Draw main handle (thinner)
-  ctx.fillStyle = woodGradient;
-  const handleWidth = 18;
-  const handleX = sling.x - handleWidth / 2 + shakeX;
-  const handleHeight = WORLD.groundY - (sling.y - 5);
-  
-  // Rounded handle
-  ctx.beginPath();
-  ctx.roundRect(handleX, sling.y - 5, handleWidth, handleHeight, [0, 0, 8, 8]);
-  ctx.fill();
-  
-  // Handle detail/shading
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Draw the "Y" fork arms (thinner and more elegant)
-  ctx.strokeStyle = woodMid;
-  ctx.lineWidth = 14;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  // Left arm
-  ctx.beginPath();
-  ctx.moveTo(sling.x + shakeX, sling.y);
-  ctx.quadraticCurveTo(leftArmX - 5, sling.y, leftArmX, forkTopY);
-  ctx.stroke();
-
-  // Right arm
-  ctx.beginPath();
-  ctx.moveTo(sling.x + shakeX, sling.y);
-  ctx.quadraticCurveTo(rightArmX + 5, sling.y, rightArmX, forkTopY);
-  ctx.stroke();
-
-  // Wood highlights for realism
-  ctx.strokeStyle = woodLight;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(leftArmX - 3, forkTopY + 5);
-  ctx.lineTo(leftArmX - 1, forkTopY + 25);
-  ctx.moveTo(rightArmX + 3, forkTopY + 5);
-  ctx.lineTo(rightArmX + 1, forkTopY + 25);
-  ctx.stroke();
-
-  if (!activeProjectile) return;
-
-  const px = activeProjectile.x;
-  const py = activeProjectile.y;
-  const showBand = isDragging || activeProjectile.snapback;
-
-  if (showBand) {
-    // Realistic rubber bands
-    ctx.lineCap = "round";
+    ctx.fillStyle = baseGrad;
+    const handleWidth = currentWeapon === "ballista" ? 24 : 18;
+    const handleHeight = WORLD.groundY - (cy - 5);
     
-    // Back band
-    ctx.strokeStyle = "#3d2616";
-    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.moveTo(rightArmX, bandY);
-    ctx.lineTo(px, py);
-    ctx.stroke();
-
-    // Front band (slightly lighter)
-    ctx.strokeStyle = "#5c3a21";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(leftArmX, bandY);
-    ctx.lineTo(px, py);
-    ctx.stroke();
-
-    // Leather pouch
-    ctx.fillStyle = "#4a2c14";
-    ctx.strokeStyle = "#2b1a0a";
-    ctx.lineWidth = 1;
-    ctx.save();
-    ctx.translate(px, py);
-    ctx.rotate(Math.atan2(py - bandY, px - sling.x));
-    ctx.beginPath();
-    ctx.roundRect(-16, -10, 32, 20, 4);
+    ctx.roundRect(cx - handleWidth / 2, cy - 5, handleWidth, handleHeight, [0, 0, 8, 8]);
     ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    ctx.lineWidth = 1.5;
     ctx.stroke();
+
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = currentWeapon === "ballista" ? 18 : 14;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (currentWeapon === "ballista") {
+      ctx.beginPath();
+      ctx.moveTo(cx - 80, forkTopY + 20);
+      ctx.quadraticCurveTo(cx, forkTopY + 40, cx + 80, forkTopY + 20);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(leftArmX - 5, cy, leftArmX, forkTopY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(rightArmX + 5, cy, rightArmX, forkTopY);
+      ctx.stroke();
+    }
+
+    if (!activeProjectile) return;
+
+    const px = activeProjectile.x;
+    const py = activeProjectile.y;
+    const showBand = isDragging || activeProjectile.snapback;
+
+    if (showBand) {
+      ctx.lineCap = "round";
+      ctx.strokeStyle = color1;
+      ctx.lineWidth = 5;
+      
+      const leftAttach = currentWeapon === "ballista" ? cx - 80 : leftArmX;
+      const rightAttach = currentWeapon === "ballista" ? cx + 80 : rightArmX;
+      const attachY = currentWeapon === "ballista" ? forkTopY + 20 : bandY;
+
+      ctx.beginPath();
+      ctx.moveTo(rightAttach, attachY);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+
+      ctx.strokeStyle = color3;
+      ctx.beginPath();
+      ctx.moveTo(leftAttach, attachY);
+      ctx.lineTo(px, py);
+      ctx.stroke();
+
+      ctx.fillStyle = color1;
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(Math.atan2(py - attachY, px - cx));
+      ctx.beginPath();
+      ctx.roundRect(-16, -10, 32, 20, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+
+  } else {
+    // Aim style (Cannon, Railgun, Antimatter)
+    let angle = -Math.PI / 4; // default pointing up-right
+    if (activeProjectile && activeProjectile.dragPoint) {
+       angle = Math.atan2(activeProjectile.dragPoint.y - sling.bandY, activeProjectile.dragPoint.x - sling.x);
+    }
+
+    // Base
+    const baseWidth = 50;
+    const baseHeight = WORLD.groundY - cy;
+    ctx.fillStyle = color1;
+    ctx.beginPath();
+    ctx.roundRect(cx - baseWidth / 2, cy, baseWidth, baseHeight, [8, 8, 0, 0]);
+    ctx.fill();
+
+    // Barrel
+    ctx.save();
+    ctx.translate(cx, sling.bandY);
+    ctx.rotate(angle);
+
+    if (currentWeapon === "cannon") {
+      ctx.fillStyle = color2;
+      ctx.fillRect(0, -20, 100, 40);
+      ctx.fillStyle = color1;
+      ctx.fillRect(-20, -25, 40, 50); // mount
+      ctx.fillStyle = color3;
+      ctx.fillRect(90, -22, 15, 44); // nozzle
+    } else if (currentWeapon === "railgun") {
+      ctx.fillStyle = color1;
+      ctx.fillRect(0, -15, 120, 10);
+      ctx.fillRect(0, 5, 120, 10);
+      ctx.fillStyle = color3; // glowing rail
+      ctx.globalAlpha = 0.8 + Math.sin(animationClock * 10) * 0.2;
+      ctx.fillRect(20, -5, 100, 10);
+    } else if (currentWeapon === "antimatter") {
+      ctx.strokeStyle = color3;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(40, 0, 30, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = color2;
+      ctx.beginPath();
+      ctx.arc(40, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
     ctx.restore();
   }
 }
@@ -1369,12 +1565,14 @@ function drawTrajectoryPreview() {
   if (!launch) return;
 
   // Use the same initial state as launchActiveProjectile
+  const w = WEAPONS[currentWeapon];
   const tempP = {
     x: activeProjectile.x,
     y: activeProjectile.y,
     vx: launch.vx,
     vy: launch.vy,
     airDrag: activeProjectile.seed.preset.airDrag,
+    gravityMult: w.gravityMult !== undefined ? w.gravityMult : 1,
     rotation: 0,
     angularV: 0
   };
@@ -1610,8 +1808,5 @@ restartBtn.addEventListener("click", resetRound);
 
 preloadIcons();
 rebuildStaticBackground();
-resetRound();
-requestAnimationFrame(loop);
-und();
 resetRound();
 requestAnimationFrame(loop);

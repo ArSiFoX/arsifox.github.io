@@ -379,6 +379,84 @@ body.is-aiming #game-canvas {
   margin: 10px 0 0;
 }
 
+/* Arsenal */
+.weapon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weapon-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--btn-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.weapon-item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.weapon-item.locked {
+  opacity: 0.6;
+  filter: grayscale(0.8);
+}
+
+.weapon-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.weapon-icon {
+  font-size: 2rem;
+}
+
+.weapon-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.weapon-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.weapon-stats {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.select-weapon-btn {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.weapon-item.active .select-weapon-btn {
+  background: var(--accent);
+  color: var(--bg-0);
+}
+
+.weapon-item.locked .select-weapon-btn {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
 @media (max-width: 920px) {
   .game-shell {
     width: calc(100% - 12px);
