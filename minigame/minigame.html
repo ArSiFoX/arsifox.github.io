@@ -1,1 +1,220 @@
-<!doctype html><html lang=ru><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Мини игра | Nedocoder</title><meta name=description content="Мини-игра: запускай IT-иконки из рогатки в ASCII-цели."><link rel=icon href=../assets/images/favicon.png type=image/png><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel=stylesheet><link rel=stylesheet href=./minigame.css></head><body><div class=game-shell><header class=game-header><div class=title-wrap><p class=eyebrow>&lt;mini_game /&gt;</p><h1>IT Осада: ASCII Разнос</h1></div><div class=actions><button id=arsenal-btn class=action-btn type=button>Арсенал ⚔️</button> <button id=shop-btn class="action-btn shop-btn" type=button>Магазин 💎</button> <button id=settings-btn class=action-btn type=button>Настройки ⚙️</button> <button id=fullscreen-btn class=action-btn type=button>На весь экран</button> <button id=restart-btn class=action-btn type=button>Новый раунд</button> <a class="action-btn back-btn" href=../index.html>Вернуться на главный сайт</a></div></header><section class=hud><p>Перерождение: <span id=rebirth-count>0</span></p><p>Уровень: <span id=game-level>1</span></p><p>Активный шар: <span id=projectile-name>...</span></p><p>Счёт: <span id=score>0</span></p><p>Цели: <span id=targets-left>0</span></p><p class=hud-hint>Тяни шар назад. Вперёд выстрелить нельзя.</p></section><section class=canvas-wrap><canvas id=game-canvas width=1600 height=900 aria-label="Мини-игра в стиле Angry Birds"></canvas></section><div id=shop-modal class="modal hidden"><div class=modal-content><div class=modal-header><h2>Магазин улучшений</h2><button id=close-shop class=close-btn>&times;</button></div><div class="modal-body shop-items"><div class=shop-item data-item=triple><div class=item-info><span class=item-icon>🚀</span> <span class=item-name>Triple Shot (30с)</span></div><button class=buy-btn data-cost=2000>2000 💎</button></div><div class=shop-item data-item=explosive><div class=item-info><span class=item-icon>💣</span> <span class=item-name>Explosive (30с)</span></div><button class=buy-btn data-cost=3500>3500 💎</button></div><div class=shop-item data-item=reinforced><div class=item-info><span class=item-icon>💎</span> <span class=item-name>Усиленные ядра (раунд)</span></div><button class=buy-btn data-cost=5000>5000 💎</button></div><div class=shop-item data-item=airstrike><div class=item-info><span class=item-icon>🌩️</span> <span class=item-name>Авиаудар (разово)</span></div><button class=buy-btn data-cost=7500>7500 💎</button></div><div class=shop-item data-item=income><div class=item-info><span class=item-icon>📈</span> <span class=item-name>Инвестиции (+10% Фарм)</span></div><button class=buy-btn data-cost=1500>1500 💎</button></div><div class=shop-item data-item=bands><div class=item-info><span class=item-icon>🎗️</span> <span class=item-name>Эластичные тяги (+растяжение)</span></div><button class=buy-btn data-cost=3000>3000 💎</button></div><div class=shop-item data-item=tension><div class=item-info><span class=item-icon>⚡</span> <span class=item-name>Тяжёлое натяжение (+скорость)</span></div><button class=buy-btn data-cost=4500>4500 💎</button></div><div class=shop-item data-item=sight><div class=item-info><span class=item-icon>🎯</span> <span class=item-name>Лазерный прицел (+длина)</span></div><button class=buy-btn data-cost=2500>2500 💎</button></div><hr style="border:0;border-top:1px solid var(--border);margin:12px 0"><div class=shop-item data-item=rebirth style=border-color:gold;background:rgba(255,215,0,.05)><div class=item-info><span class=item-icon>🌟</span><div style=display:flex;flex-direction:column><span class=item-name style=color:gold;font-weight:700>ПЕРЕРОЖДЕНИЕ</span> <span style=font-size:.75rem;opacity:.8>Сброс прогресса за пост. +10% ко всему</span></div></div><button id=rebirth-btn class=buy-btn style=border-color:gold;color:gold>1M 💎</button></div></div></div></div><div id=settings-modal class="modal hidden"><div class=modal-content><div class=modal-header><h2>Настройки игры</h2><button id=close-settings class=close-btn>&times;</button></div><div class="modal-body settings-body"><div class=setting-row><label for=game-scale>Масштаб игры:</label> <input type=range id=game-scale min=0.5 max=1.5 step=0.05 value=1> <span id=scale-value>100%</span></div><p class=setting-note>Изменение масштаба подстраивает размер окна игры под ваш экран.</p><hr style="border:0;border-top:1px solid var(--border);margin:20px 0"><div style=display:flex;justify-content:space-between;align-items:center><span style="font-family:'JetBrains Mono',monospace;font-size:.9rem">Сброс данных:</span> <button id=hard-reset-btn class=buy-btn style=border-color:#f40;color:#f40;background:rgba(255,68,0,.1)>Удалить сохранение</button></div><p class=setting-note style=color:#f40;opacity:.8>Внимание: это обнулит счет, перерождения и купленное оружие!</p></div></div></div><div id=arsenal-modal class="modal hidden"><div class=modal-content><div class=modal-header><h2>Арсенал</h2><button id=close-arsenal class=close-btn>&times;</button></div><div class="modal-body arsenal-body"><div class=weapon-list><div class="weapon-item active" data-weapon=slingshot><div class=weapon-info><span class=weapon-icon>🪃</span><div class=weapon-details><span class=weapon-name>Рогатка</span> <span class=weapon-stats>Базовое оружие</span></div></div><button class=select-weapon-btn>Выбрано</button></div><div class="weapon-item locked" data-weapon=cannon data-rebirth=10><div class=weapon-info><span class=weapon-icon>💣</span><div class=weapon-details><span class=weapon-name>Пушка</span> <span class=weapon-stats>+50% Скорость, +50% Урон</span></div></div><button class=select-weapon-btn>Нужно 10 перер.</button></div><div class="weapon-item locked" data-weapon=ballista data-rebirth=15><div class=weapon-info><span class=weapon-icon>🏹</span><div class=weapon-details><span class=weapon-name>Баллиста</span> <span class=weapon-stats>+100% Скорость, +100% Урон</span></div></div><button class=select-weapon-btn>Нужно 15 перер.</button></div><div class="weapon-item locked" data-weapon=railgun data-rebirth=20><div class=weapon-info><span class=weapon-icon>⚡</span><div class=weapon-details><span class=weapon-name>Рельсотрон</span> <span class=weapon-stats>+200% Скорость, +200% Урон</span></div></div><button class=select-weapon-btn>Нужно 20 перер.</button></div><div class="weapon-item locked" data-weapon=antimatter data-rebirth=25><div class=weapon-info><span class=weapon-icon>🌌</span><div class=weapon-details><span class=weapon-name>Антиматерия</span> <span class=weapon-stats>+400% Скорость, +400% Урон</span></div></div><button class=select-weapon-btn>Нужно 25 перер.</button></div></div></div></div></div></div><script src=./minigame.js></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мини игра | Nedocoder</title>
+  <meta name="description" content="Мини-игра: запускай IT-иконки из рогатки в ASCII-цели.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./minigame.css">
+  <link rel="icon" href="../assets/images/favicon.png" type="image/png">
+</head>
+<body>
+  <div class="game-shell">
+    <header class="game-header">
+      <div class="title-wrap">
+        <p class="eyebrow">&lt;mini_game /&gt;</p>
+        <h1>IT Осада: ASCII Разнос</h1>
+      </div>
+      <div class="actions">
+        <button id="arsenal-btn" class="action-btn" type="button">Арсенал ⚔️</button>
+        <button id="shop-btn" class="action-btn shop-btn" type="button">Магазин 💎</button>
+        <button id="settings-btn" class="action-btn" type="button">Настройки ⚙️</button>
+        <button id="fullscreen-btn" class="action-btn" type="button">На весь экран</button>
+        <button id="restart-btn" class="action-btn" type="button">Новый раунд</button>
+        <a class="action-btn back-btn" href="../index.html">Вернуться на главный сайт</a>
+      </div>
+    </header>
+
+    <section class="hud">
+      <p>Перерождение: <span id="rebirth-count">0</span></p>
+      <p>Уровень: <span id="game-level">1</span></p>
+      <p>Активный шар: <span id="projectile-name">...</span></p>
+      <p>Счёт: <span id="score">0</span></p>
+      <p>Цели: <span id="targets-left">0</span></p>
+      <p class="hud-hint">Тяни шар назад. Вперёд выстрелить нельзя.</p>
+    </section>
+
+    <section class="canvas-wrap">
+      <canvas id="game-canvas" width="1600" height="900" aria-label="Мини-игра в стиле Angry Birds"></canvas>
+    </section>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Магазин улучшений</h2>
+          <button id="close-shop" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body shop-items">
+          <div class="shop-item" data-item="triple">
+            <div class="item-info">
+              <span class="item-icon">🚀</span>
+              <span class="item-name">Triple Shot (30с)</span>
+            </div>
+            <button class="buy-btn" data-cost="2000">2000 💎</button>
+          </div>
+          <div class="shop-item" data-item="explosive">
+            <div class="item-info">
+              <span class="item-icon">💣</span>
+              <span class="item-name">Explosive (30с)</span>
+            </div>
+            <button class="buy-btn" data-cost="3500">3500 💎</button>
+          </div>
+          <div class="shop-item" data-item="reinforced">
+            <div class="item-info">
+              <span class="item-icon">💎</span>
+              <span class="item-name">Усиленные ядра (раунд)</span>
+            </div>
+            <button class="buy-btn" data-cost="5000">5000 💎</button>
+          </div>
+          <div class="shop-item" data-item="airstrike">
+            <div class="item-info">
+              <span class="item-icon">🌩️</span>
+              <span class="item-name">Авиаудар (разово)</span>
+            </div>
+            <button class="buy-btn" data-cost="7500">7500 💎</button>
+          </div>
+          <div class="shop-item" data-item="income">
+            <div class="item-info">
+              <span class="item-icon">📈</span>
+              <span class="item-name">Инвестиции (+10% Фарм)</span>
+            </div>
+            <button class="buy-btn" data-cost="1500">1500 💎</button>
+          </div>
+          <div class="shop-item" data-item="bands">
+            <div class="item-info">
+              <span class="item-icon">🎗️</span>
+              <span class="item-name">Эластичные тяги (+растяжение)</span>
+            </div>
+            <button class="buy-btn" data-cost="3000">3000 💎</button>
+          </div>
+
+          <div class="shop-item" data-item="tension">
+            <div class="item-info">
+              <span class="item-icon">⚡</span>
+              <span class="item-name">Тяжёлое натяжение (+скорость)</span>
+            </div>
+            <button class="buy-btn" data-cost="4500">4500 💎</button>
+          </div>
+          <div class="shop-item" data-item="sight">
+            <div class="item-info">
+              <span class="item-icon">🎯</span>
+              <span class="item-name">Лазерный прицел (+длина)</span>
+            </div>
+            <button class="buy-btn" data-cost="2500">2500 💎</button>
+          </div>
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+          <div class="shop-item" data-item="rebirth" style="border-color: gold; background: rgba(255, 215, 0, 0.05);">
+            <div class="item-info">
+              <span class="item-icon">🌟</span>
+              <div style="display: flex; flex-direction: column;">
+                <span class="item-name" style="color: gold; font-weight: bold;">ПЕРЕРОЖДЕНИЕ</span>
+                <span style="font-size: 0.75rem; opacity: 0.8;">Сброс прогресса за пост. +10% ко всему</span>
+              </div>
+            </div>
+            <button id="rebirth-btn" class="buy-btn" style="border-color: gold; color: gold;">1M 💎</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Настройки игры</h2>
+          <button id="close-settings" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body settings-body">
+          <div class="setting-row">
+            <label for="game-scale">Масштаб игры:</label>
+            <input type="range" id="game-scale" min="0.5" max="1.5" step="0.05" value="1">
+            <span id="scale-value">100%</span>
+          </div>
+          <p class="setting-note">Изменение масштаба подстраивает размер окна игры под ваш экран.</p>
+          
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">Сброс данных:</span>
+            <button id="hard-reset-btn" class="buy-btn" style="border-color: #ff4400; color: #ff4400; background: rgba(255, 68, 0, 0.1);">Удалить сохранение</button>
+          </div>
+          <p class="setting-note" style="color: #ff4400; opacity: 0.8;">Внимание: это обнулит счет, перерождения и купленное оружие!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arsenal Modal -->
+    <div id="arsenal-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Арсенал</h2>
+          <button id="close-arsenal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body arsenal-body">
+          <div class="weapon-list">
+            <div class="weapon-item active" data-weapon="slingshot">
+              <div class="weapon-info">
+                <span class="weapon-icon">🪃</span>
+                <div class="weapon-details">
+                    <span class="weapon-name">Рогатка</span>
+                    <span class="weapon-stats">Базовое оружие</span>
+                </div>
+              </div>
+              <button class="select-weapon-btn">Выбрано</button>
+            </div>
+            
+            <div class="weapon-item locked" data-weapon="cannon" data-rebirth="10">
+              <div class="weapon-info">
+                <span class="weapon-icon">💣</span>
+                <div class="weapon-details">
+                    <span class="weapon-name">Пушка</span>
+                    <span class="weapon-stats">+50% Скорость, +50% Урон</span>
+                </div>
+              </div>
+              <button class="select-weapon-btn">Нужно 10 перер.</button>
+            </div>
+
+            <div class="weapon-item locked" data-weapon="ballista" data-rebirth="15">
+              <div class="weapon-info">
+                <span class="weapon-icon">🏹</span>
+                <div class="weapon-details">
+                    <span class="weapon-name">Баллиста</span>
+                    <span class="weapon-stats">+100% Скорость, +100% Урон</span>
+                </div>
+              </div>
+              <button class="select-weapon-btn">Нужно 15 перер.</button>
+            </div>
+
+            <div class="weapon-item locked" data-weapon="railgun" data-rebirth="20">
+              <div class="weapon-info">
+                <span class="weapon-icon">⚡</span>
+                <div class="weapon-details">
+                    <span class="weapon-name">Рельсотрон</span>
+                    <span class="weapon-stats">+200% Скорость, +200% Урон</span>
+                </div>
+              </div>
+              <button class="select-weapon-btn">Нужно 20 перер.</button>
+            </div>
+
+            <div class="weapon-item locked" data-weapon="antimatter" data-rebirth="25">
+              <div class="weapon-info">
+                <span class="weapon-icon">🌌</span>
+                <div class="weapon-details">
+                    <span class="weapon-name">Антиматерия</span>
+                    <span class="weapon-stats">+400% Скорость, +400% Урон</span>
+                </div>
+              </div>
+              <button class="select-weapon-btn">Нужно 25 перер.</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./minigame.js"></script>
+</body>
+</html>
